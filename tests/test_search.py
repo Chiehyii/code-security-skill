@@ -180,6 +180,28 @@ class SearchTests(unittest.TestCase):
             security_search.generate_security_report("登入 api")
         self.assertIn("SECURITY ANALYSIS REPORT", output.getvalue())
 
+    def test_bm25_prefers_ssti_for_template_injection_query(self):
+        rows = security_search.load_csv("vulnerabilities.csv")
+        results = security_search.search_rows("template injection jinja2 render", rows, top_n=3)
+        self.assertEqual(results[0]["id"], "V049")
+
+    def test_bm25_prefers_nosql_injection_for_mongodb_query(self):
+        rows = security_search.load_csv("vulnerabilities.csv")
+        results = security_search.search_rows("mongodb nosql operator injection", rows, top_n=3)
+        self.assertEqual(results[0]["id"], "V050")
+
+    def test_chinese_template_query_finds_ssti(self):
+        rows = security_search.load_csv("vulnerabilities.csv")
+        results = security_search.search_rows("樣板注入 jinja2", rows, top_n=3)
+        ids = {row["id"] for row in results}
+        self.assertIn("V049", ids)
+
+    def test_chinese_nosql_query_finds_nosql_injection(self):
+        rows = security_search.load_csv("vulnerabilities.csv")
+        results = security_search.search_rows("非關聯式資料庫 mongodb", rows, top_n=3)
+        ids = {row["id"] for row in results}
+        self.assertIn("V050", ids)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -83,6 +83,9 @@ QUERY_ALIASES = {
     "資料保留": "retention deletion privacy data",
     "漏洞": "vulnerability security",
     "安全": "security",
+    "樣板注入": "template ssti render injection jinja2",
+    "非關聯式資料庫": "nosql mongodb document collection injection",
+    "樣板": "template render",
 }
 
 SEVERITY_LABELS = {
