@@ -5,6 +5,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 
@@ -65,24 +66,41 @@ class DataIntegrityTests(unittest.TestCase):
         self.assertEqual(345, sum(int(row["requirements"]) for row in asvs))
         self.assertEqual(set(range(1, 26)), {int(row["rank"]) for row in cwe})
 
-    def test_deployed_skill_copy_matches_source(self):
-        relative_files = [
-            os.path.join("data", filename)
-            for filename in security_search.EXPECTED_FIELDS
-        ] + [
-            os.path.join("scripts", "search.py"),
-            os.path.join("scripts", "validate_data.py"),
-            os.path.join("templates", "skill-content.md"),
-            os.path.join("templates", "claude.json"),
-        ]
-        source = os.path.join(ROOT, "src", "code-security")
-        deployed = os.path.join(ROOT, ".claude", "skills", "code-security")
-        for relative_file in relative_files:
-            with open(os.path.join(source, relative_file), "rb") as source_file:
-                source_bytes = source_file.read()
-            with open(os.path.join(deployed, relative_file), "rb") as deployed_file:
-                deployed_bytes = deployed_file.read()
-            self.assertEqual(source_bytes, deployed_bytes, relative_file)
+    def test_installer_creates_matching_skill_from_single_source(self):
+        installer_path = os.path.join(ROOT, "scripts", "install_skill.py")
+        spec = importlib.util.spec_from_file_location("install_skill", installer_path)
+        install_skill = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(install_skill)
+
+        with tempfile.TemporaryDirectory() as target:
+            deployed = install_skill.install(target)
+            source = os.path.join(ROOT, "src", "code-security")
+            for relative_file in [
+                os.path.join("data", filename)
+                for filename in security_search.EXPECTED_FIELDS
+            ] + [
+                os.path.join("scripts", "search.py"),
+                os.path.join("scripts", "validate_data.py"),
+                os.path.join("templates", "skill-content.md"),
+                os.path.join("templates", "claude.json"),
+            ]:
+                with open(os.path.join(source, relative_file), "rb") as source_file:
+                    source_bytes = source_file.read()
+                with open(os.path.join(deployed, relative_file), "rb") as deployed_file:
+                    deployed_bytes = deployed_file.read()
+                self.assertEqual(source_bytes, deployed_bytes, relative_file)
+
+    def test_installer_refuses_to_duplicate_inside_source_repository(self):
+        installer_path = os.path.join(ROOT, "scripts", "install_skill.py")
+        spec = importlib.util.spec_from_file_location("install_skill", installer_path)
+        install_skill = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(install_skill)
+        with self.assertRaises(ValueError):
+            install_skill.install(ROOT)
+
+    def test_source_repository_does_not_store_generated_skill_copy(self):
+        generated_copy = os.path.join(ROOT, ".claude", "skills", "code-security")
+        self.assertFalse(os.path.exists(generated_copy))
 
     def test_skill_manifest_is_valid_and_exposes_new_modes(self):
         manifest_path = os.path.join(

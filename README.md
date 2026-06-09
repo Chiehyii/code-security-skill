@@ -82,22 +82,21 @@ user = db.execute(f"SELECT * FROM users WHERE id={user_id}")
 ### For Claude Code
 
 ```bash
-# Clone into your project
+# Clone the source repository
 git clone https://github.com/your-org/code-security-skill.git /tmp/code-security-skill
 
-# Copy skill into your project
-cp -r /tmp/code-security-skill/.claude/skills/code-security .claude/skills/
-cp /tmp/code-security-skill/CLAUDE.md .  # Or append to existing CLAUDE.md
+# Install into another project
+python3 /tmp/code-security-skill/scripts/install_skill.py /path/to/your-project
 ```
 
-### Quick Install (one-liner)
+Use `--force` to replace a previously installed copy:
 
 ```bash
-mkdir -p .claude/skills && \
-  git clone https://github.com/your-org/code-security-skill.git /tmp/css && \
-  cp -r /tmp/css/.claude/skills/code-security .claude/skills/ && \
-  cat /tmp/css/CLAUDE.md >> CLAUDE.md
+python3 scripts/install_skill.py /path/to/your-project --force
 ```
+
+`src/code-security` is the only source of truth in this repository. Generated
+`.claude/skills/code-security` installations are intentionally not committed.
 
 ### Prerequisites
 
@@ -147,8 +146,8 @@ python3 .claude/skills/code-security/scripts/search.py "authentication" --mode a
 python3 .claude/skills/code-security/scripts/search.py "memory buffer" --mode cwe
 python3 .claude/skills/code-security/scripts/search.py "sast sbom secret scanning" --mode control
 
-# Validate every knowledge-base CSV before release
-python3 .claude/skills/code-security/scripts/validate_data.py
+# Validate every source knowledge-base CSV before release
+python3 src/code-security/scripts/validate_data.py
 
 # Run the automated test suite
 python3 -m unittest discover -s tests -v
@@ -245,25 +244,25 @@ python3 -m unittest discover -s tests -v
 ```
 code-security-skill/
 ├── README.md
-├── CLAUDE.md                          ← Drop this in your project root
+├── CLAUDE.md
+├── scripts/
+│   └── install_skill.py               ← Install source into another project
 ├── src/
 │   └── code-security/
 │       ├── data/
 │       │   ├── vulnerabilities.csv    ← 48 vulnerability profiles
 │       │   ├── rules.csv              ← 48 secure engineering rules
 │       │   ├── checklists.csv         ← 25 feature checklists
-│       │   └── crypto.csv             ← 12 cryptography guides
+│       │   ├── crypto.csv             ← 12 cryptography guides
 │       │   ├── asvs.csv               ← ASVS 5.0.0 chapter index
 │       │   ├── cwe_top25.csv          ← MITRE CWE Top 25 2025
 │       │   └── assurance.csv          ← governed assurance controls
 │       ├── scripts/
-│       │   └── search.py              ← BM25 search engine
+│       │   ├── search.py              ← BM25 search engine
+│       │   └── validate_data.py       ← schema and coverage validation
 │       └── templates/
 │           ├── skill-content.md       ← Core skill instructions
 │           └── claude.json            ← Platform config
-└── .claude/
-    └── skills/
-        └── code-security/             ← Ready to copy into your project
 ```
 
 ---

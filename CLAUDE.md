@@ -41,7 +41,7 @@ python3 .claude/skills/code-security/scripts/search.py "sast sbom" --mode contro
 python3 .claude/skills/code-security/scripts/validate_data.py
 ```
 
-## Skill Source Structure
+## Installed Skill Structure
 
 ```
 .claude/skills/code-security/
@@ -56,8 +56,16 @@ python3 .claude/skills/code-security/scripts/validate_data.py
 │   ├── cwe_top25.csv       ← MITRE CWE Top 25 2025
 │   └── assurance.csv       ← governed assurance controls
 └── templates/
-    └── skill-content.md    ← Core skill instructions for Claude
+    ├── skill-content.md    ← Core skill instructions for Claude
+    └── claude.json         ← Skill manifest and commands
 
+```
+
+The canonical source is maintained in `src/code-security`. Install it into
+another project with:
+
+```bash
+python3 scripts/install_skill.py /path/to/your-project
 ```
 
 ## Prerequisites
