@@ -1,0 +1,34 @@
+{
+  "name": "code-security",
+  "version": "2.0.0",
+  "description": "Automatically applies modern security standards (OWASP 2025 + LLM Top 10 + API Top 10) when writing code. Prevents SQL injection, XSS, hardcoded secrets, broken auth, IDOR, prompt injection, supply chain attacks, and 28+ other vulnerabilities.",
+  "author": "your-org",
+  "license": "MIT",
+  "activation": {
+    "auto": true,
+    "triggers": [
+      "login", "signup", "register", "auth", "authentication",
+      "password", "session", "jwt", "token",
+      "database", "sql", "query", "db",
+      "api", "endpoint", "route", "controller", "graphql", "rest",
+      "upload", "file", "image",
+      "payment", "stripe", "billing",
+      "admin", "dashboard", "cms",
+      "security", "secure", "vulnerability", "CVE", "OWASP",
+      "encrypt", "hash", "crypto",
+      "webhook", "oauth", "oauth2", "openid", "sso",
+      "llm", "ai", "openai", "anthropic", "gpt", "claude", "chatbot", "agent", "prompt", "rag",
+      "dependency", "package", "npm", "pip", "supply chain", "lockfile",
+      "docker", "kubernetes", "k8s", "cloud", "aws", "terraform",
+      "microservice", "grpc", "service mesh"
+    ]
+  },
+  "commands": {
+    "scan": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode all",
+    "checklist": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode checklist",
+    "vuln": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode vuln",
+    "crypto": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode crypto",
+    "rules": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode rules --lang {language}"
+  },
+  "skill_content_path": "skill-content.md"
+}
