@@ -8,7 +8,7 @@ When activated, Claude will apply the highest security standards **by default**,
 ## How to Use the Search Engine
 
 The skill includes a Python-based search engine (BM25 + keyword hybrid) that retrieves:
-- Vulnerability profiles (35 vulnerabilities — OWASP Web Top 10 2025, OWASP API Top 10, OWASP LLM Top 10 2025)
+- Vulnerability profiles (48 profiles, including all OWASP API Top 10 2023 and OWASP LLM Top 10 2025 categories)
 - Feature-specific security checklists (17 features: auth, DB, file upload, API, payment, admin, LLM/AI, OAuth2, GraphQL, webhooks, microservices, supply chain, cloud)
 - Language-specific secure coding rules (38 rules across Python, JavaScript, PHP, Java, Go, Ruby, C# + frameworks: Django, Flask, Express, Rails, Laravel, Spring)
 - Cryptography recommendations (12 guides: bcrypt, argon2, AES-256-GCM, JWT, mTLS, secrets management, KMS, secure token storage)
@@ -28,6 +28,9 @@ python3 .claude/skills/code-security/scripts/search.py "password hashing encrypt
 
 # Language-specific rules
 python3 .claude/skills/code-security/scripts/search.py "database query" --mode rules --lang javascript
+
+# Validate knowledge-base structure
+python3 .claude/skills/code-security/scripts/validate_data.py
 ```
 
 ## Skill Source Structure
@@ -37,10 +40,10 @@ python3 .claude/skills/code-security/scripts/search.py "database query" --mode r
 ├── scripts/
 │   └── search.py          ← BM25 + keyword search engine
 ├── data/
-│   ├── vulnerabilities.csv ← 20 OWASP-mapped vulnerabilities
-│   ├── rules.csv           ← 20 language-specific secure coding rules
-│   ├── checklists.csv      ← 10 feature-specific security checklists
-│   └── crypto.csv          ← 8 cryptography best practice guides
+│   ├── vulnerabilities.csv ← 48 vulnerability profiles
+│   ├── rules.csv           ← 38 language-specific secure coding rules
+│   ├── checklists.csv      ← 17 feature-specific security checklists
+│   └── crypto.csv          ← 12 cryptography best practice guides
 └── templates/
     └── skill-content.md    ← Core skill instructions for Claude
 
@@ -82,4 +85,4 @@ Aligned with the **OWASP Top 10 2025** (released Nov 2025), **OWASP API Security
 
 ## Version
 
-v2.0.0 — Code Security Skill (OWASP 2025 aligned + LLM/AI + API + Supply Chain coverage)
+v2.1.0 — Validated data, complete API/LLM category coverage, improved BM25, Chinese-query support

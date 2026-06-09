@@ -1,250 +1,344 @@
 #!/usr/bin/env python3
 """
 Code Security Skill - Search Engine
-BM25 + keyword hybrid search for security vulnerabilities, rules, and checklists.
-Usage:
-  python3 search.py "login feature" --mode checklist
-  python3 search.py "sql injection" --mode vuln
-  python3 search.py "password hashing" --mode crypto
-  python3 search.py "file upload" --mode all
+
+Validated CSV loading plus BM25 and trigger-keyword search.
 """
 
+import argparse
 import csv
-import sys
+import math
 import os
 import re
-import math
-import argparse
-from collections import defaultdict
+import sys
+from collections import Counter
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, '..', 'data')
+DATA_DIR = os.path.normpath(os.path.join(BASE_DIR, "..", "data"))
 
-# ─── CSV Loaders ───────────────────────────────────────────────────────────────
+EXPECTED_FIELDS = {
+    "vulnerabilities.csv": [
+        "id", "name", "category", "severity", "owasp_ref", "description",
+        "trigger_keywords", "fix_pattern", "languages",
+    ],
+    "rules.csv": [
+        "id", "language", "category", "rule", "bad_example", "good_example",
+        "reference",
+    ],
+    "checklists.csv": [
+        "id", "feature", "trigger_keywords", "checklist",
+        "required_libs_python", "required_libs_js", "severity_if_skipped",
+    ],
+    "crypto.csv": [
+        "id", "use_case", "recommended", "avoid", "notes", "python_code",
+        "javascript_code",
+    ],
+}
+
+# Common Traditional Chinese feature/security terms. English aliases match the
+# knowledge-base vocabulary while Unicode tokenization still supports other text.
+QUERY_ALIASES = {
+    "登入": "login auth authentication",
+    "登錄": "login auth authentication",
+    "驗證": "auth authentication validation verify",
+    "授權": "authorization access control",
+    "密碼": "password hashing",
+    "上傳": "file upload",
+    "檔案": "file path upload",
+    "資料庫": "database sql query",
+    "注入": "injection",
+    "隱私": "privacy pii sensitive data",
+    "機密": "secret sensitive data",
+    "日誌": "logging monitoring",
+    "記錄": "logging monitoring",
+    "雲端": "cloud",
+    "供應鏈": "supply chain dependency",
+    "金流": "payment",
+    "付款": "payment",
+    "管理員": "admin",
+    "工作階段": "session cookie",
+    "權杖": "token jwt",
+    "人工智慧": "llm ai",
+    "提示詞": "prompt llm",
+    "漏洞": "vulnerability security",
+    "安全": "security",
+}
+
+SEVERITY_LABELS = {
+    "CRITICAL": "[CRITICAL]",
+    "HIGH": "[HIGH]",
+    "MEDIUM": "[MEDIUM]",
+    "LOW": "[LOW]",
+}
+
+QUERY_STOP_WORDS = {
+    "security", "secure", "vulnerability", "vulnerabilities", "feature",
+    "system", "application", "code",
+}
+
+
+def configure_output():
+    """Avoid UnicodeEncodeError on legacy Windows terminals."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
+
 
 def load_csv(filename):
+    expected = EXPECTED_FIELDS[filename]
     path = os.path.join(DATA_DIR, filename)
-    with open(path, newline='', encoding='utf-8') as f:
-        return list(csv.DictReader(f))
+    with open(path, newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        if reader.fieldnames != expected:
+            raise ValueError(
+                f"{filename}: invalid header; expected {expected}, got {reader.fieldnames}"
+            )
 
-# ─── Simple BM25 Scorer ────────────────────────────────────────────────────────
+        rows = []
+        seen_ids = set()
+        for line_number, row in enumerate(reader, start=2):
+            if None in row:
+                raise ValueError(
+                    f"{filename}:{line_number}: too many columns; quote values containing commas"
+                )
+            if any(value is None for value in row.values()):
+                raise ValueError(f"{filename}:{line_number}: missing column value")
+            row = {key: value.strip() for key, value in row.items()}
+            if not row["id"]:
+                raise ValueError(f"{filename}:{line_number}: missing id")
+            if row["id"] in seen_ids:
+                raise ValueError(f"{filename}:{line_number}: duplicate id {row['id']}")
+            seen_ids.add(row["id"])
+            rows.append(row)
+        return rows
+
+
+def expand_query(query):
+    lowered = query.lower()
+    aliases = [value for key, value in QUERY_ALIASES.items() if key in lowered]
+    return " ".join([lowered, *aliases])
+
 
 def tokenize(text):
-    return re.findall(r'[a-z0-9]+', text.lower())
+    # Match Unicode words and split CJK sequences into characters and bigrams.
+    raw_tokens = re.findall(r"[^\W_]+", str(text).lower(), flags=re.UNICODE)
+    tokens = []
+    for token in raw_tokens:
+        tokens.append(token)
+        if re.search(r"[\u3400-\u9fff]", token):
+            chars = list(token)
+            tokens.extend(chars)
+            tokens.extend("".join(chars[index:index + 2]) for index in range(len(chars) - 1))
+    return tokens
 
-def bm25_score(query_tokens, doc_tokens, k1=1.5, b=0.75, avg_dl=20):
-    doc_len = len(doc_tokens)
-    freq = defaultdict(int)
-    for t in doc_tokens:
-        freq[t] += 1
-    score = 0.0
-    for qt in query_tokens:
-        f = freq.get(qt, 0)
-        if f == 0:
-            continue
-        idf = math.log((100 + 0.5) / (1 + 1) + 1)
-        tf = (f * (k1 + 1)) / (f + k1 * (1 - b + b * doc_len / avg_dl))
-        score += idf * tf
-    return score
 
-def score_row(query_tokens, row):
-    text = ' '.join(str(v) for v in row.values())
-    return bm25_score(query_tokens, tokenize(text))
+def row_text(row):
+    return " ".join(str(value) for value in row.values())
+
+
+def score_rows(query, rows):
+    if not rows:
+        return []
+
+    query_tokens = [
+        token for token in tokenize(expand_query(query))
+        if token not in QUERY_STOP_WORDS
+    ]
+    if not query_tokens:
+        return []
+
+    documents = [tokenize(row_text(row)) for row in rows]
+    average_length = sum(len(doc) for doc in documents) / len(documents)
+    document_frequency = Counter()
+    for document in documents:
+        document_frequency.update(set(document))
+
+    scored = []
+    for row, document in zip(rows, documents):
+        frequencies = Counter(document)
+        score = 0.0
+        for query_token in query_tokens:
+            frequency = frequencies.get(query_token, 0)
+            if not frequency:
+                continue
+            idf = math.log(
+                1 + (len(documents) - document_frequency[query_token] + 0.5)
+                / (document_frequency[query_token] + 0.5)
+            )
+            length_normalization = 1.5 * (
+                1 - 0.75 + 0.75 * len(document) / max(average_length, 1)
+            )
+            score += idf * (frequency * 2.5) / (frequency + length_normalization)
+        if score > 0:
+            scored.append((score, row))
+
+    return sorted(scored, key=lambda item: (-item[0], item[1]["id"]))
+
 
 def search_rows(query, rows, top_n=5):
-    tokens = tokenize(query)
-    scored = [(score_row(tokens, r), r) for r in rows]
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [r for s, r in scored if s > 0][:top_n]
+    return [row for _, row in score_rows(query, rows)[:top_n]]
 
-# ─── Keyword Trigger Match ─────────────────────────────────────────────────────
 
 def keyword_match(query, trigger_field):
-    query_words = set(tokenize(query))
+    query_words = set(tokenize(expand_query(query)))
     triggers = set(tokenize(trigger_field))
     return len(query_words & triggers)
 
-# ─── Output Formatters ─────────────────────────────────────────────────────────
 
-SEVERITY_COLORS = {
-    'CRITICAL': '🔴',
-    'HIGH':     '🟠',
-    'MEDIUM':   '🟡',
-    'LOW':      '🟢',
-}
-
-def fmt_vuln(v):
-    icon = SEVERITY_COLORS.get(v.get('severity', ''), '⚪')
-    lines = [
-        f"  {icon} [{v['id']}] {v['name']} — {v['severity']}",
-        f"     Category : {v['category']}",
-        f"     OWASP    : {v['owasp_ref']}",
-        f"     Risk     : {v['description']}",
-        f"     Fix      : {v['fix_pattern']}",
+def search_checklists(query, rows, top_n=3):
+    matches = [
+        (keyword_match(query, row["trigger_keywords"]), row)
+        for row in rows
     ]
-    return '\n'.join(lines)
+    matches = [match for match in matches if match[0] > 0]
+    matches.sort(key=lambda item: (-item[0], item[1]["id"]))
+    return [row for _, row in matches[:top_n]]
 
-def fmt_checklist(row, query=''):
-    items = row['checklist'].split('|')
+
+def fmt_vuln(row):
+    return "\n".join([
+        f"  {SEVERITY_LABELS.get(row['severity'], '[INFO]')} [{row['id']}] {row['name']}",
+        f"     Category : {row['category']}",
+        f"     Reference: {row['owasp_ref']}",
+        f"     Risk     : {row['description']}",
+        f"     Fix      : {row['fix_pattern']}",
+    ])
+
+
+def fmt_checklist(row):
     lines = [
-        f"  📋 {row['feature']} — Security Checklist",
-        f"     Severity if skipped: {SEVERITY_COLORS.get(row['severity_if_skipped'],'')} {row['severity_if_skipped']}",
-        '',
+        f"  [CHECKLIST] {row['feature']}",
+        f"     Severity if skipped: {row['severity_if_skipped']}",
+        "",
     ]
-    for item in items:
-        lines.append(f"     {'✅' if True else '☐'} {item.strip()}")
-    if row.get('required_libs_js') and row['required_libs_js'] != 'N/A':
-        lines.append(f"\n     📦 JS  libs : {row['required_libs_js']}")
-    if row.get('required_libs_python') and row['required_libs_python'] != 'N/A':
-        lines.append(f"     📦 PY  libs : {row['required_libs_python']}")
-    return '\n'.join(lines)
+    lines.extend(f"     [ ] {item.strip()}" for item in row["checklist"].split("|"))
+    if row["required_libs_js"] != "N/A":
+        lines.append(f"\n     JS libs : {row['required_libs_js']}")
+    if row["required_libs_python"] != "N/A":
+        lines.append(f"     PY libs : {row['required_libs_python']}")
+    return "\n".join(lines)
+
 
 def fmt_crypto(row):
-    lines = [
-        f"  🔐 [{row['id']}] {row['use_case']}",
-        f"     ✅ Use     : {row['recommended']}",
-        f"     ❌ Avoid   : {row['avoid']}",
-        f"     ℹ️  Notes   : {row['notes']}",
-    ]
-    return '\n'.join(lines)
+    return "\n".join([
+        f"  [CRYPTO] [{row['id']}] {row['use_case']}",
+        f"     Use   : {row['recommended']}",
+        f"     Avoid : {row['avoid']}",
+        f"     Notes : {row['notes']}",
+    ])
+
 
 def fmt_rule(row):
-    lines = [
-        f"  📏 [{row['id']}] {row['language'].upper()} — {row['category']}",
-        f"     Rule     : {row['rule']}",
-        f"     ❌ Bad    : {row['bad_example'][:80]}",
-        f"     ✅ Good   : {row['good_example'][:80]}",
-    ]
-    return '\n'.join(lines)
+    return "\n".join([
+        f"  [RULE] [{row['id']}] {row['language'].upper()} - {row['category']}",
+        f"     Rule : {row['rule']}",
+        f"     Bad  : {row['bad_example'][:100]}",
+        f"     Good : {row['good_example'][:100]}",
+        f"     Ref  : {row['reference']}",
+    ])
 
-# ─── Security Report Generator ────────────────────────────────────────────────
+
+def print_section(title, rows, formatter):
+    if not rows:
+        return
+    print(f"\n{'-' * 88}\n  {title}\n{'-' * 88}")
+    for row in rows:
+        print(formatter(row))
+        print()
+
+
+def print_no_results(query, mode):
+    print(f'No relevant {mode} guidance found for "{query}".')
+
 
 def generate_security_report(query, language=None):
-    vulns      = load_csv('vulnerabilities.csv')
-    rules      = load_csv('rules.csv')
-    checklists = load_csv('checklists.csv')
-    crypto     = load_csv('crypto.csv')
-
-    # Find matching checklists by keyword trigger
-    matched_checklists = sorted(
-        checklists,
-        key=lambda r: keyword_match(query, r['trigger_keywords']),
-        reverse=True
-    )[:2]
-
-    # Find relevant vulnerabilities
-    matched_vulns = search_rows(query, vulns, top_n=4)
-
-    # Language-specific rules
+    checklists = search_checklists(query, load_csv("checklists.csv"), top_n=2)
+    vulnerabilities = search_rows(query, load_csv("vulnerabilities.csv"), top_n=5)
+    rules = load_csv("rules.csv")
     if language:
-        lang_rules = [r for r in rules if r['language'] in (language, 'all')]
-        matched_rules = search_rows(query, lang_rules, top_n=3)
-    else:
-        matched_rules = search_rows(query, rules, top_n=3)
+        rules = [row for row in rules if row["language"] in (language.lower(), "all")]
+    rules = search_rows(query, rules, top_n=4)
+    crypto = search_rows(query, load_csv("crypto.csv"), top_n=3)
 
-    # Crypto recommendations
-    matched_crypto = search_rows(query, crypto, top_n=2)
+    print("=" * 88)
+    print("  CODE SECURITY SKILL - SECURITY ANALYSIS REPORT")
+    print(f'  Query: "{query}"' + (f" | Language: {language}" if language else ""))
+    print("=" * 88)
 
-    # ─── Print Report ─────────────────────────────────────────────────────────
-    width = 88
-    print('=' * width)
-    print(f"  🛡️  CODE SECURITY SKILL — SECURITY ANALYSIS REPORT")
-    print(f"  Query   : \"{query}\"" + (f"  |  Language: {language}" if language else ''))
-    print('=' * width)
+    print_section("FEATURE SECURITY CHECKLIST", checklists, fmt_checklist)
+    print_section("VULNERABILITIES TO GUARD AGAINST", vulnerabilities, fmt_vuln)
+    print_section("SECURE CODING RULES", rules, fmt_rule)
+    print_section("CRYPTOGRAPHY RECOMMENDATIONS", crypto, fmt_crypto)
 
-    if matched_checklists and keyword_match(query, matched_checklists[0]['trigger_keywords']) > 0:
-        print(f"\n{'─'*width}")
-        print("  📋  FEATURE SECURITY CHECKLIST  (apply before writing any code)")
-        print(f"{'─'*width}")
-        for row in matched_checklists:
-            if keyword_match(query, row['trigger_keywords']) > 0:
-                print(fmt_checklist(row, query))
-                print()
+    if not any((checklists, vulnerabilities, rules, crypto)):
+        print_no_results(query, "security")
 
-    if matched_vulns:
-        print(f"\n{'─'*width}")
-        print("  ⚠️   VULNERABILITIES TO GUARD AGAINST")
-        print(f"{'─'*width}")
-        for v in matched_vulns:
-            print(fmt_vuln(v))
-            print()
+    print_section("PRE-DELIVERY SECURITY CHECKLIST", [{
+        "feature": "Baseline controls",
+        "severity_if_skipped": "HIGH",
+        "checklist": "|".join([
+            "No secrets or API keys committed to source control",
+            "Input is validated and output is contextually encoded",
+            "Database queries are parameterized",
+            "Authentication and object/function authorization are tested",
+            "Sensitive endpoints have abuse controls and rate limits",
+            "Production errors do not disclose internal details",
+            "Dependencies and build artifacts are scanned and traceable",
+            "Security-relevant events are logged without sensitive values",
+        ]),
+        "required_libs_js": "N/A",
+        "required_libs_python": "N/A",
+    }], fmt_checklist)
 
-    if matched_rules:
-        print(f"\n{'─'*width}")
-        print("  📏  LANGUAGE-SPECIFIC SECURE CODING RULES")
-        print(f"{'─'*width}")
-        for r in matched_rules:
-            print(fmt_rule(r))
-            print()
-
-    if matched_crypto:
-        print(f"\n{'─'*width}")
-        print("  🔐  CRYPTOGRAPHY RECOMMENDATIONS")
-        print(f"{'─'*width}")
-        for c in matched_crypto:
-            print(fmt_crypto(c))
-            print()
-
-    print(f"\n{'─'*width}")
-    print("  📌  PRE-DELIVERY SECURITY CHECKLIST")
-    print(f"{'─'*width}")
-    pre_delivery = [
-        "No secrets / API keys hardcoded in source code or committed to Git",
-        "All user input validated (type, length, format, allowed chars)",
-        "All database queries use parameterized statements",
-        "Passwords hashed with bcrypt/argon2 (never MD5/SHA1/plain)",
-        "Authentication and authorization checked on EVERY endpoint",
-        "Error responses use generic messages (no stack traces in prod)",
-        "Rate limiting applied to sensitive endpoints",
-        "HTTPS enforced; HTTP requests redirected",
-        "Security headers configured (CSP, HSTS, X-Frame-Options, X-Content-Type)",
-        "Dependencies up to date; no known CVEs in production deps",
-    ]
-    for item in pre_delivery:
-        print(f"     ☐ {item}")
-
-    print('\n' + '=' * width)
-    print("  Generated by Code Security Skill — https://github.com/your-org/code-security-skill")
-    print('=' * width)
-
-# ─── CLI ──────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description='Code Security Skill Search Engine')
-    parser.add_argument('query', help='Feature or topic to search (e.g. "login api file upload")')
-    parser.add_argument('--mode', choices=['all', 'vuln', 'checklist', 'crypto', 'rules'],
-                        default='all', help='Search mode')
-    parser.add_argument('--lang', '--language', dest='language',
-                        help='Programming language filter (python, javascript, php, java, go, ruby, csharp)')
-    parser.add_argument('-n', '--top', type=int, default=5, help='Number of results')
+    configure_output()
+    parser = argparse.ArgumentParser(description="Code Security Skill Search Engine")
+    parser.add_argument("query", help='Feature or topic to search, e.g. "login api file upload"')
+    parser.add_argument(
+        "--mode", choices=["all", "vuln", "checklist", "crypto", "rules"],
+        default="all", help="Search mode",
+    )
+    parser.add_argument(
+        "--lang", "--language", dest="language",
+        help="Language filter, e.g. python, javascript, php, java, go, ruby, csharp",
+    )
+    parser.add_argument("-n", "--top", type=int, default=5, help="Number of results")
     args = parser.parse_args()
 
-    if args.mode == 'all':
-        generate_security_report(args.query, language=args.language)
-    elif args.mode == 'vuln':
-        rows = search_rows(args.query, load_csv('vulnerabilities.csv'), args.top)
-        for r in rows:
-            print(fmt_vuln(r))
-            print()
-    elif args.mode == 'checklist':
-        rows = load_csv('checklists.csv')
-        rows = sorted(rows, key=lambda r: keyword_match(args.query, r['trigger_keywords']), reverse=True)
-        for r in rows[:3]:
-            print(fmt_checklist(r))
-            print()
-    elif args.mode == 'crypto':
-        rows = search_rows(args.query, load_csv('crypto.csv'), args.top)
-        for r in rows:
-            print(fmt_crypto(r))
-            print()
-    elif args.mode == 'rules':
-        all_rules = load_csv('rules.csv')
-        if args.language:
-            all_rules = [r for r in all_rules if r['language'] in (args.language, 'all')]
-        rows = search_rows(args.query, all_rules, args.top)
-        for r in rows:
-            print(fmt_rule(r))
-            print()
+    if args.top < 1:
+        parser.error("--top must be at least 1")
 
-if __name__ == '__main__':
+    if args.mode == "all":
+        generate_security_report(args.query, language=args.language)
+        return
+
+    config = {
+        "vuln": ("vulnerabilities.csv", fmt_vuln),
+        "crypto": ("crypto.csv", fmt_crypto),
+        "rules": ("rules.csv", fmt_rule),
+    }
+    if args.mode == "checklist":
+        rows = search_checklists(args.query, load_csv("checklists.csv"), args.top)
+        formatter = fmt_checklist
+    else:
+        filename, formatter = config[args.mode]
+        rows = load_csv(filename)
+        if args.mode == "rules" and args.language:
+            rows = [
+                row for row in rows
+                if row["language"] in (args.language.lower(), "all")
+            ]
+        rows = search_rows(args.query, rows, args.top)
+
+    if not rows:
+        print_no_results(args.query, args.mode)
+        return
+    for row in rows:
+        print(formatter(row))
+        print()
+
+
+if __name__ == "__main__":
     main()

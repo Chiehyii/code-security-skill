@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 [![OWASP Top 10](https://img.shields.io/badge/OWASP_Top_10-2021-red?style=for-the-badge)](https://owasp.org/Top10/)
-[![20 Vulnerabilities](https://img.shields.io/badge/vulnerabilities-20-orange?style=for-the-badge)]()
+[![48 Vulnerability Profiles](https://img.shields.io/badge/vulnerability_profiles-48-orange?style=for-the-badge)]()
 [![Python 3.x](https://img.shields.io/badge/python-3.x-yellow?style=for-the-badge&logo=python&logoColor=white)]()
 
 > An AI Skill that automatically applies military-grade security standards when engineers write code.  
@@ -57,11 +57,11 @@ user = db.execute(f"SELECT * FROM users WHERE id={user_id}")
 
 ## Features
 
-- **35 vulnerabilities** — aligned with OWASP Top 10 2025, OWASP API Top 10, and OWASP LLM Top 10 2025
+- **48 vulnerability profiles** — includes complete category coverage for OWASP API Security Top 10 2023 and OWASP LLM Top 10 2025
 - **17 Feature-specific security checklists** — Auth, DB, File Upload, API, Payment, Admin, Password Reset, Session, **LLM/AI, OAuth2, GraphQL, Webhooks, Microservices, Supply Chain, Cloud**
 - **38 Language & framework rules** — Python, JS/TS, PHP, Java, Go, Ruby, C# + **Django, Flask, Express, Rails, Laravel, Spring**
 - **12 Cryptography guides** — bcrypt, argon2, AES-256-GCM, HMAC, JWT, mTLS, **secrets management, KMS, secure token storage**
-- **BM25 + keyword hybrid search engine** — finds the most relevant security guidance for any query
+- **Validated BM25 + keyword hybrid search engine** — supports common Traditional Chinese queries, explicit no-result responses, and legacy Windows terminals
 - **Auto-activation** — triggers on 50+ keywords including modern ones (llm, prompt, agent, supply chain, kubernetes, graphql, oauth, …)
 
 ### What's New in v2.0
@@ -138,6 +138,12 @@ python3 .claude/skills/code-security/scripts/search.py "password hashing" --mode
 
 # Language-specific rules
 python3 .claude/skills/code-security/scripts/search.py "database query" --mode rules --lang javascript
+
+# Validate every knowledge-base CSV before release
+python3 .claude/skills/code-security/scripts/validate_data.py
+
+# Run the automated test suite
+python3 -m unittest discover -s tests -v
 ```
 
 ---
@@ -221,6 +227,8 @@ python3 .claude/skills/code-security/scripts/search.py "database query" --mode r
 | V033 | Race Condition / TOCTOU | 🟠 HIGH | CWE-362 |
 | V034 | Insecure Cookie Configuration | 🟡 MEDIUM | A02:2025 |
 | V035 | Container & Cloud Misconfiguration | 🟠 HIGH | A02:2025 ☁️ |
+| V036–V040, V047–V048 | Remaining OWASP API Security Top 10 2023 categories | 🟡–🔴 | API2/3/6/7/8/9/10:2023 |
+| V041–V046 | Remaining OWASP LLM Top 10 2025 categories | 🟡–🟠 | LLM03/04/07/08/09/10:2025 |
 
 ---
 
@@ -233,10 +241,10 @@ code-security-skill/
 ├── src/
 │   └── code-security/
 │       ├── data/
-│       │   ├── vulnerabilities.csv    ← 20 OWASP vulnerabilities
-│       │   ├── rules.csv              ← 20 language-specific rules
-│       │   ├── checklists.csv         ← 10 feature checklists
-│       │   └── crypto.csv             ← 8 cryptography guides
+│       │   ├── vulnerabilities.csv    ← 48 vulnerability profiles
+│       │   ├── rules.csv              ← 38 language-specific rules
+│       │   ├── checklists.csv         ← 17 feature checklists
+│       │   └── crypto.csv             ← 12 cryptography guides
 │       ├── scripts/
 │       │   └── search.py              ← BM25 search engine
 │       └── templates/
@@ -256,6 +264,9 @@ PRs welcome! Areas to contribute:
 - Additional language rules (Rust, Swift, Kotlin, Elixir)
 - Framework-specific rules (Django, Rails, Laravel, Spring Boot, NestJS)
 - More feature checklists (OAuth2, WebSockets, GraphQL, gRPC)
+
+This skill is a secure-development aid, not a replacement for threat modeling,
+security testing, dependency scanning, secret scanning, or expert review.
 
 ---
 

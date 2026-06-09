@@ -8,7 +8,7 @@ R006,javascript,injection,Never use eval() or Function() with user input,"eval(u
 R007,javascript,xss,Never set innerHTML with untrusted data,"el.innerHTML = userInput","el.textContent = userInput  // or use DOMPurify.sanitize()",OWASP A03
 R008,javascript,auth,Never use jwt 'none' algorithm; always verify signature,"jwt.decode(token, options: {algorithms: ['none']})","jwt.verify(token, SECRET, {algorithms: ['HS256']})",OWASP A07
 R009,javascript,secrets,Never hardcode secrets in client-side JS,"const API_KEY = 'sk-1234'","Use process.env.API_KEY and never expose in frontend bundle",OWASP A02
-R010,javascript,prototype,Sanitize keys before object merge,"Object.assign(target, userControlledObj)","const safe = JSON.parse(JSON.stringify(userObj)); // then validate keys",OWASP A03
+R010,javascript,prototype,Reject dangerous keys before merging untrusted objects,"Object.assign(target, userControlledObj)","Validate against a strict schema and reject __proto__, prototype, and constructor keys",OWASP A03
 R011,typescript,auth,Always type request user and validate ownership,"router.get('/item/:id', (req, res) => { Item.findById(req.params.id) })","router.get('/item/:id', auth, (req: AuthRequest, res) => { Item.findById(req.params.id, {owner: req.user.id}) })",OWASP A01
 R012,php,injection,Never use $_GET/$_POST directly in queries,"$q = 'SELECT * FROM users WHERE id=' . $_GET['id']","$stmt = $pdo->prepare('SELECT * FROM users WHERE id=?'); $stmt->execute([$_GET['id']])",OWASP A03
 R013,php,upload,Validate file type by MIME + extension,"move_uploaded_file($_FILES['f']['tmp_name'], 'uploads/'.$_FILES['f']['name'])","$finfo = new finfo(FILEINFO_MIME_TYPE); validate mime; use uniqid() name; store outside webroot",OWASP A03
@@ -25,7 +25,7 @@ R023,python,framework,Django - keep DEBUG=False and never expose SECRET_KEY in p
 R024,python,framework,Django - use ORM not raw() to avoid SQL injection,"User.objects.raw(f'SELECT * FROM u WHERE id={id}')","User.objects.filter(id=id)  # or raw with params list",OWASP A03
 R025,python,framework,Flask - set SESSION_COOKIE_HTTPONLY and SECURE,"app.config (defaults, no flags set)","app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SECURE=True, SESSION_COOKIE_SAMESITE='Lax')",OWASP A05
 R026,javascript,framework,Express - use helmet for security headers,"app.use(express.json())  // no security headers","app.use(helmet()); // sets CSP, HSTS, X-Frame-Options etc.",OWASP A05
-R027,javascript,framework,Express - validate input with zod/joi, never trust req.body,"const x = req.body.amount  // unvalidated","const x = schema.parse(req.body)  // zod validation",OWASP A03
+R027,javascript,framework,"Express - validate input with zod/joi; never trust req.body","const x = req.body.amount  // unvalidated","const x = schema.parse(req.body)  // zod validation",OWASP A03
 R028,javascript,llm,Never render LLM output as HTML without sanitization,"div.innerHTML = aiResponse  // XSS via LLM","div.textContent = aiResponse  // or DOMPurify.sanitize()",OWASP LLM05
 R029,javascript,supply_chain,Pin dependencies and commit lockfile,"\"express\": \"^4.0.0\"  // floating range","\"express\": \"4.21.2\" + commit package-lock.json",OWASP A03:2025
 R030,ruby,framework,Rails - use strong params and avoid html_safe on user input,"<%= raw user_content %>  // XSS","<%= user_content %>  // auto-escaped by ERB",OWASP A03

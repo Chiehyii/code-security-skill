@@ -59,7 +59,7 @@ STEP 5 — OUTPUT FORMAT
 | Rule | What to do |
 |------|-----------|
 | SQL Injection | **ALWAYS** use parameterized queries / prepared statements. Never concatenate user input into SQL. |
-| Password Storage | **ALWAYS** hash with bcrypt (rounds≥12) or argon2id. Never MD5, SHA1, SHA256-plain, or plaintext. |
+| Password Storage | **ALWAYS** use argon2id or an appropriately configured password KDF. Never MD5, SHA1, SHA256-plain, or plaintext. |
 | Secrets Management | **NEVER** hardcode API keys, passwords, or tokens. Use `os.environ` / `process.env` / secret managers. |
 | Authentication | **ALWAYS** verify identity before serving protected resources. No "trust the frontend." |
 | Authorization | **ALWAYS** verify the authenticated user **owns** or has permission to access the specific resource. |
