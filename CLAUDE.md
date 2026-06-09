@@ -9,9 +9,12 @@ When activated, Claude will apply the highest security standards **by default**,
 
 The skill includes a Python-based search engine (BM25 + keyword hybrid) that retrieves:
 - Vulnerability profiles (48 profiles, including all OWASP API Top 10 2023 and OWASP LLM Top 10 2025 categories)
-- Feature-specific security checklists (17 features: auth, DB, file upload, API, payment, admin, LLM/AI, OAuth2, GraphQL, webhooks, microservices, supply chain, cloud)
-- Language-specific secure coding rules (38 rules across Python, JavaScript, PHP, Java, Go, Ruby, C# + frameworks: Django, Flask, Express, Rails, Laravel, Spring)
+- Feature-specific security checklists (25 features including CI/CD, privacy, WebSocket, serverless, mobile, native code, and incident response)
+- Language-specific secure engineering rules (48 rules across Python, JavaScript, PHP, Java, Go, Ruby, C#, C/C++, Rust, Terraform, and frameworks)
 - Cryptography recommendations (12 guides: bcrypt, argon2, AES-256-GCM, JWT, mTLS, secrets management, KMS, secure token storage)
+- OWASP ASVS 5.0.0 chapter index (17 chapters / 345 requirements)
+- MITRE CWE Top 25 2025 root-cause index
+- Governed security assurance controls with verification evidence and review dates
 
 ```bash
 # Full security report for any feature
@@ -29,6 +32,11 @@ python3 .claude/skills/code-security/scripts/search.py "password hashing encrypt
 # Language-specific rules
 python3 .claude/skills/code-security/scripts/search.py "database query" --mode rules --lang javascript
 
+# Verification areas, root causes, and assurance controls
+python3 .claude/skills/code-security/scripts/search.py "authentication" --mode asvs
+python3 .claude/skills/code-security/scripts/search.py "memory buffer" --mode cwe
+python3 .claude/skills/code-security/scripts/search.py "sast sbom" --mode control
+
 # Validate knowledge-base structure
 python3 .claude/skills/code-security/scripts/validate_data.py
 ```
@@ -41,9 +49,12 @@ python3 .claude/skills/code-security/scripts/validate_data.py
 │   └── search.py          ← BM25 + keyword search engine
 ├── data/
 │   ├── vulnerabilities.csv ← 48 vulnerability profiles
-│   ├── rules.csv           ← 38 language-specific secure coding rules
-│   ├── checklists.csv      ← 17 feature-specific security checklists
-│   └── crypto.csv          ← 12 cryptography best practice guides
+│   ├── rules.csv           ← 48 secure engineering rules
+│   ├── checklists.csv      ← 25 feature-specific security checklists
+│   ├── crypto.csv          ← 12 cryptography best practice guides
+│   ├── asvs.csv            ← ASVS 5.0.0 chapter index
+│   ├── cwe_top25.csv       ← MITRE CWE Top 25 2025
+│   └── assurance.csv       ← governed assurance controls
 └── templates/
     └── skill-content.md    ← Core skill instructions for Claude
 
@@ -86,4 +97,4 @@ Aligned with the **OWASP Top 10 2025** (released Nov 2025), **OWASP API Security
 
 ## Version
 
-v2.1.0 — Validated data, complete API/LLM category coverage, improved BM25, Chinese-query support
+v3.0.0 — ASVS 5.0.0, CWE Top 25 2025, assurance controls, broader platform coverage

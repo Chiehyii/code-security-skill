@@ -19,14 +19,14 @@ R017,go,crypto,Use crypto/rand not math/rand for security-sensitive values,"rand
 R018,ruby,mass_assignment,Use strong parameters / permit whitelist,"@user.update(params[:user])","@user.update(params.require(:user).permit(:name, :email))",OWASP A01:2025
 R019,csharp,injection,Use parameterized queries with SqlCommand,"new SqlCommand('SELECT * FROM u WHERE id=' + id, conn)","cmd.Parameters.AddWithValue('@id', id)",OWASP A05:2025
 R020,all,logging,Never log sensitive fields,"logger.info(f'Login: user={username} pass={password}')","logger.info(f'Login attempt: user={username}')  # never log password",OWASP A09:2025
-R021,python,llm,Treat LLM output as untrusted before using downstream,"exec(llm_response)  # RCE risk","# Parse + validate structured output; never exec/eval LLM text",OWASP LLM05
-R022,python,llm,Never interpolate untrusted content directly into prompts as instructions,"prompt = f'Summarize: {user_doc}'  # indirect injection","Use clear delimiters + system/user role separation; treat retrieved docs as data not instructions",OWASP LLM01
+R021,python,llm,Treat LLM output as untrusted before using downstream,"exec(llm_response)  # RCE risk","# Parse + validate structured output; never exec/eval LLM text",OWASP LLM05:2025
+R022,python,llm,Never interpolate untrusted content directly into prompts as instructions,"prompt = f'Summarize: {user_doc}'  # indirect injection","Use clear delimiters + system/user role separation; treat retrieved docs as data not instructions",OWASP LLM01:2025
 R023,python,framework,Django - keep DEBUG=False and never expose SECRET_KEY in prod,"DEBUG = True  # leaks stack traces","DEBUG = False; SECRET_KEY = os.environ['SECRET_KEY']",OWASP A02:2025
 R024,python,framework,Django - use ORM not raw() to avoid SQL injection,"User.objects.raw(f'SELECT * FROM u WHERE id={id}')","User.objects.filter(id=id)  # or raw with params list",OWASP A05:2025
 R025,python,framework,Flask - set SESSION_COOKIE_HTTPONLY and SECURE,"app.config (defaults, no flags set)","app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SECURE=True, SESSION_COOKIE_SAMESITE='Lax')",OWASP A02:2025
 R026,javascript,framework,Express - use helmet for security headers,"app.use(express.json())  // no security headers","app.use(helmet()); // sets CSP, HSTS, X-Frame-Options etc.",OWASP A02:2025
 R027,javascript,framework,"Express - validate input with zod/joi; never trust req.body","const x = req.body.amount  // unvalidated","const x = schema.parse(req.body)  // zod validation",OWASP A05:2025
-R028,javascript,llm,Never render LLM output as HTML without sanitization,"div.innerHTML = aiResponse  // XSS via LLM","div.textContent = aiResponse  // or DOMPurify.sanitize()",OWASP LLM05
+R028,javascript,llm,Never render LLM output as HTML without sanitization,"div.innerHTML = aiResponse  // XSS via LLM","div.textContent = aiResponse  // or DOMPurify.sanitize()",OWASP LLM05:2025
 R029,javascript,supply_chain,Pin dependencies and commit lockfile,"\"express\": \"^4.0.0\"  // floating range","\"express\": \"4.21.2\" + commit package-lock.json",OWASP A03:2025
 R030,ruby,framework,Rails - use strong params and avoid html_safe on user input,"<%= raw user_content %>  // XSS","<%= user_content %>  // auto-escaped by ERB",OWASP A05:2025
 R031,php,framework,Laravel - use Eloquent/query builder not DB::raw with input,"DB::select('SELECT * FROM u WHERE id='.$id)","User::where('id', $id)->first()  // or bindings",OWASP A05:2025
@@ -35,5 +35,15 @@ R033,go,framework,Use html/template not text/template for web output,"text/templ
 R034,all,error_handling,Fail closed - deny by default on errors not allow,"catch { return allowAccess() }  // fail open","catch { return denyAccess() }  // fail closed",OWASP A10:2025
 R035,all,error_handling,Never expose stack traces or internal errors to users,"res.status(500).send(err.stack)","res.status(500).json({error: 'Internal error'}); logger.error(err)",OWASP A10:2025
 R036,all,race_condition,Use atomic DB operations for balance/inventory updates,"bal = get(); set(bal - amount)  // race","UPDATE accounts SET bal=bal-? WHERE id=? AND bal>=?  // atomic",CWE-362
-R037,all,api,Verify object ownership on every API request (prevent BOLA),"Order.find(req.params.id)  // any user's order","Order.find({id: req.params.id, userId: req.user.id})",OWASP API1
+R037,all,api,Verify object ownership on every API request (prevent BOLA),"Order.find(req.params.id)  // any user's order","Order.find({id: req.params.id, userId: req.user.id})",OWASP API1:2023
 R038,all,oauth,Always validate OAuth state and use exact redirect_uri,"redirect_uri: req.query.url  // open redirect","Whitelist exact redirect_uri; validate state param matches",OWASP A01:2025
+R039,c,memory_safety,Use bounds-checked APIs and validate lengths before every memory operation,"strcpy(dst, input);","Validate input length and use a bounded operation sized to dst",CWE-120
+R040,cpp,memory_safety,Prefer RAII containers and smart pointers over raw ownership,"char* p = new char[n]; delete[] p;","std::vector<char> data(n); // automatic bounds-aware lifetime",CWE-416
+R041,rust,memory_safety,Minimize unsafe blocks and document invariants at each unsafe boundary,"unsafe { raw_ptr.as_ref().unwrap() }","Use safe APIs; isolate unavoidable unsafe code and test its invariants",OWASP ASVS 5.0.0 V15
+R042,all,architecture,Threat-model high-risk workflows before implementation,"Build payment flow without abuse cases or trust boundaries","Document assets, trust boundaries, abuse cases, controls, and negative tests",OWASP ASVS 5.0.0 V15
+R043,all,supply_chain,Generate an SBOM and verify release provenance,"Deploy artifact with unknown transitive dependencies","Generate SBOM; sign artifact; verify provenance before deploy",OWASP ASVS 5.0.0 V13
+R044,all,secrets,Run secret scanning and revoke exposed credentials,"Remove leaked key from latest commit only","Revoke key immediately; scan history; remediate exposure; prevent recurrence",OWASP ASVS 5.0.0 V13
+R045,terraform,cloud,Prevent public and wildcard cloud permissions by policy,"actions = ['*']; resources = ['*']","Use least-privilege actions and resources; enforce policy-as-code checks",OWASP ASVS 5.0.0 V13
+R046,all,privacy,Define and test retention and deletion for sensitive data,"Keep all user data and backups indefinitely","Set approved retention; test deletion across primary data, caches, and backups",OWASP ASVS 5.0.0 V14
+R047,all,testing,Add negative authorization tests for every protected resource,"Test only that the owner can access the object","Test unauthenticated, wrong-user, wrong-role, and cross-tenant access",OWASP ASVS 5.0.0 V8
+R048,all,incident_response,Design credentials and sessions for rapid revocation,"Long-lived credentials cannot be centrally revoked","Use short-lived credentials and tested centralized revocation procedures",OWASP ASVS 5.0.0 V16

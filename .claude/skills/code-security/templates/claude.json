@@ -1,7 +1,7 @@
 {
   "name": "code-security",
-  "version": "2.0.0",
-  "description": "Automatically applies modern security standards (OWASP 2025 + LLM Top 10 + API Top 10) when writing code. Prevents SQL injection, XSS, hardcoded secrets, broken auth, IDOR, prompt injection, supply chain attacks, and 28+ other vulnerabilities.",
+  "version": "3.0.0",
+  "description": "Applies OWASP Web/API/LLM Top 10, ASVS 5.0.0, CWE Top 25 2025, and security assurance controls when writing or reviewing code.",
   "author": "your-org",
   "license": "MIT",
   "activation": {
@@ -20,7 +20,11 @@
       "llm", "ai", "openai", "anthropic", "gpt", "claude", "chatbot", "agent", "prompt", "rag",
       "dependency", "package", "npm", "pip", "supply chain", "lockfile",
       "docker", "kubernetes", "k8s", "cloud", "aws", "terraform",
-      "microservice", "grpc", "service mesh"
+      "microservice", "grpc", "service mesh",
+      "threat model", "sdlc", "sast", "dast", "sbom", "secret scanning",
+      "websocket", "realtime", "serverless", "lambda",
+      "mobile", "android", "ios", "memory", "buffer", "unsafe",
+      "privacy", "pii", "retention", "incident response", "runbook"
     ]
   },
   "commands": {
@@ -28,7 +32,10 @@
     "checklist": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode checklist",
     "vuln": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode vuln",
     "crypto": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode crypto",
-    "rules": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode rules --lang {language}"
+    "rules": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode rules --lang {language}",
+    "asvs": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode asvs",
+    "cwe": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode cwe",
+    "control": "python3 .claude/skills/code-security/scripts/search.py \"{query}\" --mode control"
   },
   "skill_content_path": "skill-content.md"
 }

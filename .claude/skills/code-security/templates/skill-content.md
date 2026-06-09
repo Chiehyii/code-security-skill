@@ -30,6 +30,7 @@ STEP 1 — IDENTIFY FEATURE TYPE
 STEP 2 — LOAD VULNERABILITY PROFILE
   → Which OWASP Top 10 vulnerabilities apply?
   → What is the severity if ignored?
+  → Which ASVS 5.0.0 verification areas and CWE Top 25 root causes apply?
 
 STEP 3 — APPLY SECURITY PATTERNS
   → Parameterized queries (never string concat)
@@ -43,6 +44,11 @@ STEP 4 — SELECT SECURE LIBRARIES
   → Use battle-tested security libraries
   → Never roll your own crypto
   → Never roll your own auth
+
+STEP 4B — PLAN SECURITY ASSURANCE
+  → Identify required evidence: tests, scans, threat model, logs, or review
+  → Run relevant SAST, secret scanning, SCA/SBOM, IaC, DAST, and fuzzing controls
+  → Time-box exceptions with an owner and expiry
 
 STEP 5 — OUTPUT FORMAT
   → Write secure code
@@ -371,6 +377,11 @@ python3 .claude/skills/code-security/scripts/search.py "password hashing" --mode
 
 # Language-specific rules
 python3 .claude/skills/code-security/scripts/search.py "database query" --mode rules --lang javascript
+
+# ASVS verification areas, CWE root causes, and assurance controls
+python3 .claude/skills/code-security/scripts/search.py "authentication" --mode asvs
+python3 .claude/skills/code-security/scripts/search.py "memory buffer" --mode cwe
+python3 .claude/skills/code-security/scripts/search.py "sast sbom" --mode control
 ```
 
 ---

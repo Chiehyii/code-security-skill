@@ -34,6 +34,18 @@ EXPECTED_FIELDS = {
         "id", "use_case", "recommended", "avoid", "notes", "python_code",
         "javascript_code",
     ],
+    "asvs.csv": [
+        "id", "name", "requirements", "focus", "trigger_keywords",
+        "source_version",
+    ],
+    "cwe_top25.csv": [
+        "id", "rank", "name", "category", "applies_to", "prevention",
+        "trigger_keywords", "source_version",
+    ],
+    "assurance.csv": [
+        "id", "phase", "control", "verification", "evidence", "automation",
+        "trigger_keywords", "reference", "review_date",
+    ],
 }
 
 # Common Traditional Chinese feature/security terms. English aliases match the
@@ -61,6 +73,14 @@ QUERY_ALIASES = {
     "權杖": "token jwt",
     "人工智慧": "llm ai",
     "提示詞": "prompt llm",
+    "威脅模型": "threat model architecture abuse case",
+    "原始碼掃描": "sast static analysis",
+    "動態掃描": "dast dynamic scan",
+    "軟體物料清單": "sbom dependency supply chain",
+    "記憶體": "memory buffer pointer native",
+    "行動裝置": "mobile android ios",
+    "事件應變": "incident response recovery revoke",
+    "資料保留": "retention deletion privacy data",
     "漏洞": "vulnerability security",
     "安全": "security",
 }
@@ -239,6 +259,34 @@ def fmt_rule(row):
     ])
 
 
+def fmt_asvs(row):
+    return "\n".join([
+        f"  [ASVS] [{row['id']}] {row['name']}",
+        f"     Requirements: {row['requirements']}",
+        f"     Focus       : {row['focus']}",
+        f"     Source      : {row['source_version']}",
+    ])
+
+
+def fmt_cwe(row):
+    return "\n".join([
+        f"  [CWE TOP 25] #{row['rank']} {row['id']} - {row['name']}",
+        f"     Category  : {row['category']} | Applies to: {row['applies_to']}",
+        f"     Prevention: {row['prevention']}",
+        f"     Source    : {row['source_version']}",
+    ])
+
+
+def fmt_assurance(row):
+    return "\n".join([
+        f"  [CONTROL] [{row['id']}] {row['phase']} - {row['control']}",
+        f"     Verify    : {row['verification']}",
+        f"     Evidence  : {row['evidence']}",
+        f"     Automation: {row['automation']}",
+        f"     Reference : {row['reference']} | Reviewed: {row['review_date']}",
+    ])
+
+
 def print_section(title, rows, formatter):
     if not rows:
         return
@@ -260,6 +308,9 @@ def generate_security_report(query, language=None):
         rules = [row for row in rules if row["language"] in (language.lower(), "all")]
     rules = search_rows(query, rules, top_n=4)
     crypto = search_rows(query, load_csv("crypto.csv"), top_n=3)
+    asvs = search_rows(query, load_csv("asvs.csv"), top_n=3)
+    cwe = search_rows(query, load_csv("cwe_top25.csv"), top_n=3)
+    assurance = search_rows(query, load_csv("assurance.csv"), top_n=3)
 
     print("=" * 88)
     print("  CODE SECURITY SKILL - SECURITY ANALYSIS REPORT")
@@ -270,8 +321,11 @@ def generate_security_report(query, language=None):
     print_section("VULNERABILITIES TO GUARD AGAINST", vulnerabilities, fmt_vuln)
     print_section("SECURE CODING RULES", rules, fmt_rule)
     print_section("CRYPTOGRAPHY RECOMMENDATIONS", crypto, fmt_crypto)
+    print_section("ASVS VERIFICATION AREAS", asvs, fmt_asvs)
+    print_section("CWE TOP 25 ROOT CAUSES", cwe, fmt_cwe)
+    print_section("SECURITY ASSURANCE CONTROLS", assurance, fmt_assurance)
 
-    if not any((checklists, vulnerabilities, rules, crypto)):
+    if not any((checklists, vulnerabilities, rules, crypto, asvs, cwe, assurance)):
         print_no_results(query, "security")
 
     print_section("PRE-DELIVERY SECURITY CHECKLIST", [{
@@ -297,7 +351,8 @@ def main():
     parser = argparse.ArgumentParser(description="Code Security Skill Search Engine")
     parser.add_argument("query", help='Feature or topic to search, e.g. "login api file upload"')
     parser.add_argument(
-        "--mode", choices=["all", "vuln", "checklist", "crypto", "rules"],
+        "--mode",
+        choices=["all", "vuln", "checklist", "crypto", "rules", "asvs", "cwe", "control"],
         default="all", help="Search mode",
     )
     parser.add_argument(
@@ -318,6 +373,9 @@ def main():
         "vuln": ("vulnerabilities.csv", fmt_vuln),
         "crypto": ("crypto.csv", fmt_crypto),
         "rules": ("rules.csv", fmt_rule),
+        "asvs": ("asvs.csv", fmt_asvs),
+        "cwe": ("cwe_top25.csv", fmt_cwe),
+        "control": ("assurance.csv", fmt_assurance),
     }
     if args.mode == "checklist":
         rows = search_checklists(args.query, load_csv("checklists.csv"), args.top)

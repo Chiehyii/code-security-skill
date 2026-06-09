@@ -1,5 +1,6 @@
 import importlib.util
 import io
+import json
 import os
 import re
 import subprocess
@@ -43,11 +44,26 @@ class DataIntegrityTests(unittest.TestCase):
             if re.match(r"^OWASP A\d{2}", row["reference"])
         ]
         self.assertTrue(all(reference.endswith(":2025") for reference in web_rule_references))
+        self.assertTrue(all(
+            row["reference"].endswith(":2023")
+            for row in rules if row["reference"].startswith("OWASP API")
+        ))
+        self.assertTrue(all(
+            row["reference"].endswith(":2025")
+            for row in rules if row["reference"].startswith("OWASP LLM")
+        ))
 
     def test_llm_top_10_2025_is_covered(self):
         rows = security_search.load_csv("vulnerabilities.csv")
         references = {row["owasp_ref"] for row in rows}
         self.assertTrue({f"LLM{number:02}:2025" for number in range(1, 11)} <= references)
+
+    def test_asvs_and_cwe_indexes_are_complete(self):
+        asvs = security_search.load_csv("asvs.csv")
+        cwe = security_search.load_csv("cwe_top25.csv")
+        self.assertEqual({f"V{number}" for number in range(1, 18)}, {row["id"] for row in asvs})
+        self.assertEqual(345, sum(int(row["requirements"]) for row in asvs))
+        self.assertEqual(set(range(1, 26)), {int(row["rank"]) for row in cwe})
 
     def test_deployed_skill_copy_matches_source(self):
         relative_files = [
@@ -67,6 +83,15 @@ class DataIntegrityTests(unittest.TestCase):
             with open(os.path.join(deployed, relative_file), "rb") as deployed_file:
                 deployed_bytes = deployed_file.read()
             self.assertEqual(source_bytes, deployed_bytes, relative_file)
+
+    def test_skill_manifest_is_valid_and_exposes_new_modes(self):
+        manifest_path = os.path.join(
+            ROOT, "src", "code-security", "templates", "claude.json"
+        )
+        with open(manifest_path, encoding="utf-8") as manifest_file:
+            manifest = json.load(manifest_file)
+        self.assertEqual("3.0.0", manifest["version"])
+        self.assertTrue({"asvs", "cwe", "control"} <= set(manifest["commands"]))
 
 
 class SearchTests(unittest.TestCase):
@@ -94,6 +119,23 @@ class SearchTests(unittest.TestCase):
         results = security_search.search_rows("llm security", rows, top_n=10)
         self.assertEqual(10, len(results))
         self.assertTrue(all(row["owasp_ref"].startswith("LLM") for row in results))
+
+    def test_memory_query_finds_native_cwe_and_checklist(self):
+        cwe = security_search.search_rows(
+            "記憶體安全 buffer", security_search.load_csv("cwe_top25.csv"), top_n=5
+        )
+        checklists = security_search.search_checklists(
+            "記憶體安全 native", security_search.load_csv("checklists.csv"), top_n=5
+        )
+        self.assertTrue(any(row["category"] == "Memory Safety" for row in cwe))
+        self.assertTrue(any(row["feature"] == "Native / Memory-Safe Code" for row in checklists))
+
+    def test_assurance_query_finds_pipeline_controls(self):
+        controls = security_search.search_rows(
+            "sast sbom secret scanning", security_search.load_csv("assurance.csv"), top_n=8
+        )
+        ids = {row["id"] for row in controls}
+        self.assertTrue({"A004", "A005", "A006"} <= ids)
 
     def test_language_filter_keeps_all_language_rules(self):
         rows = security_search.load_csv("rules.csv")

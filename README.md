@@ -58,9 +58,12 @@ user = db.execute(f"SELECT * FROM users WHERE id={user_id}")
 ## Features
 
 - **48 vulnerability profiles** — includes complete category coverage for OWASP API Security Top 10 2023 and OWASP LLM Top 10 2025
-- **17 Feature-specific security checklists** — Auth, DB, File Upload, API, Payment, Admin, Password Reset, Session, **LLM/AI, OAuth2, GraphQL, Webhooks, Microservices, Supply Chain, Cloud**
-- **38 Language & framework rules** — Python, JS/TS, PHP, Java, Go, Ruby, C# + **Django, Flask, Express, Rails, Laravel, Spring**
+- **25 Feature-specific security checklists** — Auth, API, LLM, CI/CD, privacy, WebSocket, serverless, mobile, native memory safety, incident response, and more
+- **48 Language, framework & engineering rules** — Python, JS/TS, PHP, Java, Go, Ruby, C#, C/C++, Rust, Terraform, and shared practices
 - **12 Cryptography guides** — bcrypt, argon2, AES-256-GCM, HMAC, JWT, mTLS, **secrets management, KMS, secure token storage**
+- **OWASP ASVS 5.0.0 index** — searchable coverage of all 17 chapters and the official 345-requirement total
+- **MITRE CWE Top 25 2025 index** — complete ranked root-cause coverage, including native memory-safety weaknesses
+- **15 governed assurance controls** — threat modeling, SAST, DAST, secrets, SBOM, provenance, fuzzing, IaC, incident response, and privacy lifecycle
 - **Validated BM25 + keyword hybrid search engine** — supports common Traditional Chinese queries, explicit no-result responses, and legacy Windows terminals
 - **Auto-activation** — triggers on 50+ keywords including modern ones (llm, prompt, agent, supply chain, kubernetes, graphql, oauth, …)
 
@@ -138,6 +141,11 @@ python3 .claude/skills/code-security/scripts/search.py "password hashing" --mode
 
 # Language-specific rules
 python3 .claude/skills/code-security/scripts/search.py "database query" --mode rules --lang javascript
+
+# Verification standards and security assurance
+python3 .claude/skills/code-security/scripts/search.py "authentication" --mode asvs
+python3 .claude/skills/code-security/scripts/search.py "memory buffer" --mode cwe
+python3 .claude/skills/code-security/scripts/search.py "sast sbom secret scanning" --mode control
 
 # Validate every knowledge-base CSV before release
 python3 .claude/skills/code-security/scripts/validate_data.py
@@ -242,9 +250,12 @@ code-security-skill/
 │   └── code-security/
 │       ├── data/
 │       │   ├── vulnerabilities.csv    ← 48 vulnerability profiles
-│       │   ├── rules.csv              ← 38 language-specific rules
-│       │   ├── checklists.csv         ← 17 feature checklists
+│       │   ├── rules.csv              ← 48 secure engineering rules
+│       │   ├── checklists.csv         ← 25 feature checklists
 │       │   └── crypto.csv             ← 12 cryptography guides
+│       │   ├── asvs.csv               ← ASVS 5.0.0 chapter index
+│       │   ├── cwe_top25.csv          ← MITRE CWE Top 25 2025
+│       │   └── assurance.csv          ← governed assurance controls
 │       ├── scripts/
 │       │   └── search.py              ← BM25 search engine
 │       └── templates/
@@ -273,6 +284,8 @@ security testing, dependency scanning, secret scanning, or expert review.
 ## References
 
 - [OWASP Top 10 2025](https://owasp.org/Top10/2025/en/)
+- [OWASP ASVS 5.0.0](https://github.com/OWASP/ASVS/tree/v5.0.0)
+- [MITRE CWE Top 25 2025](https://cwe.mitre.org/top25/archive/2025/2025_cwe_top25.html)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
 - [CWE Top 25](https://cwe.mitre.org/top25/)
 - [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)

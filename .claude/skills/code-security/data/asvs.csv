@@ -1,0 +1,18 @@
+id,name,requirements,focus,trigger_keywords,source_version
+V1,Encoding and Sanitization,30,Contextual encoding sanitization and injection prevention,encode sanitize injection sql xss command ldap xpath regex,OWASP ASVS 5.0.0
+V2,Validation and Business Logic,13,Input validation type safety and business-rule enforcement,validation business logic workflow abuse type range,OWASP ASVS 5.0.0
+V3,Web Frontend Security,31,Browser security DOM controls cookies headers and client-side behavior,frontend browser dom cookie csp cors csrf,OWASP ASVS 5.0.0
+V4,API and Web Service,16,API protocols schemas resource controls and service security,api rest graphql soap grpc schema endpoint,OWASP ASVS 5.0.0
+V5,File Handling,13,Safe upload download parsing storage and file processing,file upload download archive parser path,OWASP ASVS 5.0.0
+V6,Authentication,47,Identity proofing authentication factors credentials and recovery,authentication login password mfa passkey webauthn recovery,OWASP ASVS 5.0.0
+V7,Session Management,19,Session lifecycle identifiers cookies termination and concurrency,session cookie logout timeout fixation,OWASP ASVS 5.0.0
+V8,Authorization,13,Object function field and contextual authorization,authorization access control idor bola role permission,OWASP ASVS 5.0.0
+V9,Self-contained Tokens,7,Secure validation and lifecycle of signed or encrypted tokens,jwt token signature claims issuer audience,OWASP ASVS 5.0.0
+V10,OAuth and OIDC,36,OAuth and OpenID Connect client authorization and provider controls,oauth oidc openid pkce state nonce scope,OWASP ASVS 5.0.0
+V11,Cryptography,24,Algorithms key management randomness hashing and encryption,crypto encryption key random hash signature kms,OWASP ASVS 5.0.0
+V12,Secure Communication,12,TLS certificate validation transport security and trusted channels,tls https certificate mtls transport,OWASP ASVS 5.0.0
+V13,Configuration,21,Secure deployment configuration dependencies and exposed services,configuration deploy dependency debug cloud container,OWASP ASVS 5.0.0
+V14,Data Protection,13,Data classification minimization privacy retention and disposal,data privacy pii retention deletion backup,OWASP ASVS 5.0.0
+V15,Secure Coding and Architecture,21,Secure architecture memory safety concurrency and defensive coding,architecture threat model memory concurrency safe coding,OWASP ASVS 5.0.0
+V16,Security Logging and Error Handling,17,Audit logging alerting error handling and sensitive-data redaction,logging alert monitoring error incident audit,OWASP ASVS 5.0.0
+V17,WebRTC,12,Signaling media permission identity and peer-to-peer communication security,webrtc realtime media peer signaling stun turn,OWASP ASVS 5.0.0
