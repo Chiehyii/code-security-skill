@@ -1,6 +1,7 @@
 import importlib.util
 import io
 import os
+import re
 import subprocess
 import sys
 import unittest
@@ -29,6 +30,19 @@ class DataIntegrityTests(unittest.TestCase):
         rows = security_search.load_csv("vulnerabilities.csv")
         references = {row["owasp_ref"] for row in rows}
         self.assertTrue({f"API{number}:2023" for number in range(1, 11)} <= references)
+
+    def test_web_top_10_2025_is_covered_without_legacy_references(self):
+        vulnerabilities = security_search.load_csv("vulnerabilities.csv")
+        rules = security_search.load_csv("rules.csv")
+        references = {row["owasp_ref"] for row in vulnerabilities}
+        self.assertTrue({f"A{number:02}:2025" for number in range(1, 11)} <= references)
+        self.assertFalse(any("2021" in row["owasp_ref"] for row in vulnerabilities))
+        self.assertFalse(any("2021" in row["reference"] for row in rules))
+        web_rule_references = [
+            row["reference"] for row in rules
+            if re.match(r"^OWASP A\d{2}", row["reference"])
+        ]
+        self.assertTrue(all(reference.endswith(":2025") for reference in web_rule_references))
 
     def test_llm_top_10_2025_is_covered(self):
         rows = security_search.load_csv("vulnerabilities.csv")

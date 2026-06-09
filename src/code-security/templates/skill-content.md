@@ -395,7 +395,7 @@ After writing any code, append a security block:
 
 ## REFERENCES
 
-- OWASP Top 10 2021: https://owasp.org/Top10/
+- OWASP Top 10 2025: https://owasp.org/Top10/2025/en/
 - OWASP Cheat Sheet Series: https://cheatsheetseries.owasp.org/
 - CWE Top 25: https://cwe.mitre.org/top25/
 - NIST Cybersecurity Framework: https://www.nist.gov/cyberframework

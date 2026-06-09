@@ -1,39 +1,39 @@
 id,language,category,rule,bad_example,good_example,reference
-R001,python,injection,Never use string formatting to build SQL queries,"cursor.execute(f'SELECT * FROM users WHERE id={user_id}')","cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))",OWASP A03
-R002,python,auth,Use bcrypt or argon2 for password hashing,"hashlib.md5(password.encode()).hexdigest()","import bcrypt; bcrypt.hashpw(password.encode(), bcrypt.gensalt())",OWASP A07
-R003,python,deserialization,Never use pickle.load on untrusted data,"data = pickle.loads(user_input)","data = json.loads(user_input)  # or use yaml.safe_load",OWASP A08
-R004,python,path,Always use os.path.realpath and validate against allowed base dir,"open(f'/uploads/{filename}')","safe = os.path.realpath(os.path.join(BASE, filename)); assert safe.startswith(BASE)",OWASP A03
-R005,python,secrets,Load secrets from environment variables,"API_KEY = 'sk-abc123hardcoded'","API_KEY = os.environ['API_KEY']",OWASP A02
-R006,javascript,injection,Never use eval() or Function() with user input,"eval(userInput)","Use JSON.parse() for data; never execute user strings",OWASP A03
-R007,javascript,xss,Never set innerHTML with untrusted data,"el.innerHTML = userInput","el.textContent = userInput  // or use DOMPurify.sanitize()",OWASP A03
-R008,javascript,auth,Never use jwt 'none' algorithm; always verify signature,"jwt.decode(token, options: {algorithms: ['none']})","jwt.verify(token, SECRET, {algorithms: ['HS256']})",OWASP A07
-R009,javascript,secrets,Never hardcode secrets in client-side JS,"const API_KEY = 'sk-1234'","Use process.env.API_KEY and never expose in frontend bundle",OWASP A02
-R010,javascript,prototype,Reject dangerous keys before merging untrusted objects,"Object.assign(target, userControlledObj)","Validate against a strict schema and reject __proto__, prototype, and constructor keys",OWASP A03
-R011,typescript,auth,Always type request user and validate ownership,"router.get('/item/:id', (req, res) => { Item.findById(req.params.id) })","router.get('/item/:id', auth, (req: AuthRequest, res) => { Item.findById(req.params.id, {owner: req.user.id}) })",OWASP A01
-R012,php,injection,Never use $_GET/$_POST directly in queries,"$q = 'SELECT * FROM users WHERE id=' . $_GET['id']","$stmt = $pdo->prepare('SELECT * FROM users WHERE id=?'); $stmt->execute([$_GET['id']])",OWASP A03
-R013,php,upload,Validate file type by MIME + extension,"move_uploaded_file($_FILES['f']['tmp_name'], 'uploads/'.$_FILES['f']['name'])","$finfo = new finfo(FILEINFO_MIME_TYPE); validate mime; use uniqid() name; store outside webroot",OWASP A03
-R014,java,injection,Use PreparedStatement not Statement,"stmt.execute('SELECT * FROM u WHERE id=' + id)","PreparedStatement ps = conn.prepareStatement('SELECT * FROM u WHERE id=?'); ps.setInt(1, id)",OWASP A03
-R015,java,deserialization,Never deserialize untrusted data with ObjectInputStream,"new ObjectInputStream(untrustedStream).readObject()","Use JSON (Jackson) with strict type handling; implement look-ahead deserialization filter",OWASP A08
-R016,go,injection,Use parameterized queries with database/sql,"db.Query('SELECT * FROM users WHERE id=' + id)","db.Query('SELECT * FROM users WHERE id=?', id)",OWASP A03
-R017,go,crypto,Use crypto/rand not math/rand for security-sensitive values,"rand.Intn(999999)","crypto/rand.Read(b) for tokens and secrets",OWASP A02
-R018,ruby,mass_assignment,Use strong parameters / permit whitelist,"@user.update(params[:user])","@user.update(params.require(:user).permit(:name, :email))",OWASP A01
-R019,csharp,injection,Use parameterized queries with SqlCommand,"new SqlCommand('SELECT * FROM u WHERE id=' + id, conn)","cmd.Parameters.AddWithValue('@id', id)",OWASP A03
-R020,all,logging,Never log sensitive fields,"logger.info(f'Login: user={username} pass={password}')","logger.info(f'Login attempt: user={username}')  # never log password",OWASP A02
+R001,python,injection,Never use string formatting to build SQL queries,"cursor.execute(f'SELECT * FROM users WHERE id={user_id}')","cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))",OWASP A05:2025
+R002,python,auth,Use bcrypt or argon2 for password hashing,"hashlib.md5(password.encode()).hexdigest()","import bcrypt; bcrypt.hashpw(password.encode(), bcrypt.gensalt())",OWASP A07:2025
+R003,python,deserialization,Never use pickle.load on untrusted data,"data = pickle.loads(user_input)","data = json.loads(user_input)  # or use yaml.safe_load",OWASP A08:2025
+R004,python,path,Always use os.path.realpath and validate against allowed base dir,"open(f'/uploads/{filename}')","safe = os.path.realpath(os.path.join(BASE, filename)); assert safe.startswith(BASE)",OWASP A01:2025
+R005,python,secrets,Load secrets from environment variables,"API_KEY = 'sk-abc123hardcoded'","API_KEY = os.environ['API_KEY']",OWASP A04:2025
+R006,javascript,injection,Never use eval() or Function() with user input,"eval(userInput)","Use JSON.parse() for data; never execute user strings",OWASP A05:2025
+R007,javascript,xss,Never set innerHTML with untrusted data,"el.innerHTML = userInput","el.textContent = userInput  // or use DOMPurify.sanitize()",OWASP A05:2025
+R008,javascript,auth,Never use jwt 'none' algorithm; always verify signature,"jwt.decode(token, options: {algorithms: ['none']})","jwt.verify(token, SECRET, {algorithms: ['HS256']})",OWASP A07:2025
+R009,javascript,secrets,Never hardcode secrets in client-side JS,"const API_KEY = 'sk-1234'","Use process.env.API_KEY and never expose in frontend bundle",OWASP A04:2025
+R010,javascript,prototype,Reject dangerous keys before merging untrusted objects,"Object.assign(target, userControlledObj)","Validate against a strict schema and reject __proto__, prototype, and constructor keys",OWASP A08:2025
+R011,typescript,auth,Always type request user and validate ownership,"router.get('/item/:id', (req, res) => { Item.findById(req.params.id) })","router.get('/item/:id', auth, (req: AuthRequest, res) => { Item.findById(req.params.id, {owner: req.user.id}) })",OWASP A01:2025
+R012,php,injection,Never use $_GET/$_POST directly in queries,"$q = 'SELECT * FROM users WHERE id=' . $_GET['id']","$stmt = $pdo->prepare('SELECT * FROM users WHERE id=?'); $stmt->execute([$_GET['id']])",OWASP A05:2025
+R013,php,upload,Validate file type by MIME + extension,"move_uploaded_file($_FILES['f']['tmp_name'], 'uploads/'.$_FILES['f']['name'])","$finfo = new finfo(FILEINFO_MIME_TYPE); validate mime; use uniqid() name; store outside webroot",OWASP A05:2025
+R014,java,injection,Use PreparedStatement not Statement,"stmt.execute('SELECT * FROM u WHERE id=' + id)","PreparedStatement ps = conn.prepareStatement('SELECT * FROM u WHERE id=?'); ps.setInt(1, id)",OWASP A05:2025
+R015,java,deserialization,Never deserialize untrusted data with ObjectInputStream,"new ObjectInputStream(untrustedStream).readObject()","Use JSON (Jackson) with strict type handling; implement look-ahead deserialization filter",OWASP A08:2025
+R016,go,injection,Use parameterized queries with database/sql,"db.Query('SELECT * FROM users WHERE id=' + id)","db.Query('SELECT * FROM users WHERE id=?', id)",OWASP A05:2025
+R017,go,crypto,Use crypto/rand not math/rand for security-sensitive values,"rand.Intn(999999)","crypto/rand.Read(b) for tokens and secrets",OWASP A04:2025
+R018,ruby,mass_assignment,Use strong parameters / permit whitelist,"@user.update(params[:user])","@user.update(params.require(:user).permit(:name, :email))",OWASP A01:2025
+R019,csharp,injection,Use parameterized queries with SqlCommand,"new SqlCommand('SELECT * FROM u WHERE id=' + id, conn)","cmd.Parameters.AddWithValue('@id', id)",OWASP A05:2025
+R020,all,logging,Never log sensitive fields,"logger.info(f'Login: user={username} pass={password}')","logger.info(f'Login attempt: user={username}')  # never log password",OWASP A09:2025
 R021,python,llm,Treat LLM output as untrusted before using downstream,"exec(llm_response)  # RCE risk","# Parse + validate structured output; never exec/eval LLM text",OWASP LLM05
 R022,python,llm,Never interpolate untrusted content directly into prompts as instructions,"prompt = f'Summarize: {user_doc}'  # indirect injection","Use clear delimiters + system/user role separation; treat retrieved docs as data not instructions",OWASP LLM01
-R023,python,framework,Django - keep DEBUG=False and never expose SECRET_KEY in prod,"DEBUG = True  # leaks stack traces","DEBUG = False; SECRET_KEY = os.environ['SECRET_KEY']",OWASP A02
-R024,python,framework,Django - use ORM not raw() to avoid SQL injection,"User.objects.raw(f'SELECT * FROM u WHERE id={id}')","User.objects.filter(id=id)  # or raw with params list",OWASP A03
-R025,python,framework,Flask - set SESSION_COOKIE_HTTPONLY and SECURE,"app.config (defaults, no flags set)","app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SECURE=True, SESSION_COOKIE_SAMESITE='Lax')",OWASP A05
-R026,javascript,framework,Express - use helmet for security headers,"app.use(express.json())  // no security headers","app.use(helmet()); // sets CSP, HSTS, X-Frame-Options etc.",OWASP A05
-R027,javascript,framework,"Express - validate input with zod/joi; never trust req.body","const x = req.body.amount  // unvalidated","const x = schema.parse(req.body)  // zod validation",OWASP A03
+R023,python,framework,Django - keep DEBUG=False and never expose SECRET_KEY in prod,"DEBUG = True  # leaks stack traces","DEBUG = False; SECRET_KEY = os.environ['SECRET_KEY']",OWASP A02:2025
+R024,python,framework,Django - use ORM not raw() to avoid SQL injection,"User.objects.raw(f'SELECT * FROM u WHERE id={id}')","User.objects.filter(id=id)  # or raw with params list",OWASP A05:2025
+R025,python,framework,Flask - set SESSION_COOKIE_HTTPONLY and SECURE,"app.config (defaults, no flags set)","app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SECURE=True, SESSION_COOKIE_SAMESITE='Lax')",OWASP A02:2025
+R026,javascript,framework,Express - use helmet for security headers,"app.use(express.json())  // no security headers","app.use(helmet()); // sets CSP, HSTS, X-Frame-Options etc.",OWASP A02:2025
+R027,javascript,framework,"Express - validate input with zod/joi; never trust req.body","const x = req.body.amount  // unvalidated","const x = schema.parse(req.body)  // zod validation",OWASP A05:2025
 R028,javascript,llm,Never render LLM output as HTML without sanitization,"div.innerHTML = aiResponse  // XSS via LLM","div.textContent = aiResponse  // or DOMPurify.sanitize()",OWASP LLM05
 R029,javascript,supply_chain,Pin dependencies and commit lockfile,"\"express\": \"^4.0.0\"  // floating range","\"express\": \"4.21.2\" + commit package-lock.json",OWASP A03:2025
-R030,ruby,framework,Rails - use strong params and avoid html_safe on user input,"<%= raw user_content %>  // XSS","<%= user_content %>  // auto-escaped by ERB",OWASP A03
-R031,php,framework,Laravel - use Eloquent/query builder not DB::raw with input,"DB::select('SELECT * FROM u WHERE id='.$id)","User::where('id', $id)->first()  // or bindings",OWASP A03
-R032,java,framework,Spring - enable CSRF protection and method-level @PreAuthorize,"// CSRF disabled, no auth annotations","@PreAuthorize(\"hasRole('ADMIN')\") + CSRF enabled by default",OWASP A01
-R033,go,framework,Use html/template not text/template for web output,"text/template renders unescaped (XSS)","html/template auto-escapes HTML context",OWASP A03
+R030,ruby,framework,Rails - use strong params and avoid html_safe on user input,"<%= raw user_content %>  // XSS","<%= user_content %>  // auto-escaped by ERB",OWASP A05:2025
+R031,php,framework,Laravel - use Eloquent/query builder not DB::raw with input,"DB::select('SELECT * FROM u WHERE id='.$id)","User::where('id', $id)->first()  // or bindings",OWASP A05:2025
+R032,java,framework,Spring - enable CSRF protection and method-level @PreAuthorize,"// CSRF disabled, no auth annotations","@PreAuthorize(\"hasRole('ADMIN')\") + CSRF enabled by default",OWASP A01:2025
+R033,go,framework,Use html/template not text/template for web output,"text/template renders unescaped (XSS)","html/template auto-escapes HTML context",OWASP A05:2025
 R034,all,error_handling,Fail closed - deny by default on errors not allow,"catch { return allowAccess() }  // fail open","catch { return denyAccess() }  // fail closed",OWASP A10:2025
 R035,all,error_handling,Never expose stack traces or internal errors to users,"res.status(500).send(err.stack)","res.status(500).json({error: 'Internal error'}); logger.error(err)",OWASP A10:2025
 R036,all,race_condition,Use atomic DB operations for balance/inventory updates,"bal = get(); set(bal - amount)  // race","UPDATE accounts SET bal=bal-? WHERE id=? AND bal>=?  // atomic",CWE-362
 R037,all,api,Verify object ownership on every API request (prevent BOLA),"Order.find(req.params.id)  // any user's order","Order.find({id: req.params.id, userId: req.user.id})",OWASP API1
-R038,all,oauth,Always validate OAuth state and use exact redirect_uri,"redirect_uri: req.query.url  // open redirect","Whitelist exact redirect_uri; validate state param matches",OWASP A01
+R038,all,oauth,Always validate OAuth state and use exact redirect_uri,"redirect_uri: req.query.url  // open redirect","Whitelist exact redirect_uri; validate state param matches",OWASP A01:2025

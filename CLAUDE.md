@@ -71,16 +71,17 @@ Aligned with the **OWASP Top 10 2025** (released Nov 2025), **OWASP API Security
 | Standard | Coverage |
 |----------|----------|
 | Web A01:2025 | Broken Access Control / IDOR / SSRF (merged in 2025) |
-| Web A02:2025 | Security Misconfiguration / Hardcoded Secrets / Weak Crypto / Cookies |
-| Web A03:2025 | **Software Supply Chain Failures (NEW)** + Injection |
-| Web A05/A07/A08 | XXE / Auth Failures / Deserialization |
-| Web A09:2025 | Insufficient Logging & Monitoring |
+| Web A02:2025 | Security Misconfiguration / Cookies / Security Headers |
+| Web A03:2025 | **Software Supply Chain Failures (NEW)** |
+| Web A04:2025 | Cryptographic Failures / Hardcoded Secrets |
+| Web A05:2025 | Injection / XSS / XXE / Unsafe File Upload |
+| Web A06:2025 | Insecure Design / Missing Abuse Controls / ReDoS |
+| Web A07:2025 | Authentication Failures / JWT |
+| Web A08:2025 | Software or Data Integrity Failures / Deserialization |
+| Web A09:2025 | Security Logging & Alerting Failures |
 | Web A10:2025 | **Mishandling of Exceptional Conditions (NEW)** |
-| API1–5 | BOLA / BFLA / Unrestricted Resource Consumption |
-| LLM01:2025 | **Prompt Injection (direct + indirect)** |
-| LLM02:2025 | Sensitive Information Disclosure |
-| LLM05:2025 | Insecure Output Handling |
-| LLM06:2025 | Excessive Agency |
+| API1–10:2023 | Complete OWASP API Security Top 10 category coverage |
+| LLM01–10:2025 | Complete OWASP LLM Top 10 category coverage |
 | CWE-362 | Race Condition / TOCTOU |
 
 ## Version

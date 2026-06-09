@@ -1,7 +1,7 @@
 # 🛡️ Code Security Skill
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
-[![OWASP Top 10](https://img.shields.io/badge/OWASP_Top_10-2021-red?style=for-the-badge)](https://owasp.org/Top10/)
+[![OWASP Top 10](https://img.shields.io/badge/OWASP_Top_10-2025-red?style=for-the-badge)](https://owasp.org/Top10/2025/en/)
 [![48 Vulnerability Profiles](https://img.shields.io/badge/vulnerability_profiles-48-orange?style=for-the-badge)]()
 [![Python 3.x](https://img.shields.io/badge/python-3.x-yellow?style=for-the-badge&logo=python&logoColor=white)]()
 
@@ -180,7 +180,7 @@ python3 -m unittest discover -s tests -v
   ⚠️   VULNERABILITIES TO GUARD AGAINST
 ────────────────────────────────────────────────────────────────────────────────────────
   🔴 [V005] Broken Authentication — CRITICAL
-     Category: Auth Failures | OWASP: A07:2021
+     Category: Auth Failures | OWASP: A07:2025
      Risk: Weak or missing authentication mechanisms
      Fix: Use bcrypt/argon2 for passwords; implement MFA; secure session management
   ...
@@ -192,26 +192,26 @@ python3 -m unittest discover -s tests -v
 
 | ID | Vulnerability | Severity | OWASP |
 |----|--------------|----------|-------|
-| V001 | SQL Injection | 🔴 CRITICAL | A03:2021 |
-| V002 | Command Injection | 🔴 CRITICAL | A03:2021 |
-| V003 | XSS (Cross-Site Scripting) | 🟠 HIGH | A03:2021 |
-| V004 | Hardcoded Secrets | 🔴 CRITICAL | A02:2021 |
-| V005 | Broken Authentication | 🔴 CRITICAL | A07:2021 |
-| V006 | IDOR / Broken Access Control | 🟠 HIGH | A01:2021 |
-| V007 | Path Traversal | 🟠 HIGH | A03:2021 |
-| V008 | Insecure Deserialization | 🟠 HIGH | A08:2021 |
-| V009 | Missing Rate Limiting | 🟡 MEDIUM | A04:2021 |
-| V010 | Sensitive Data in Logs | 🟠 HIGH | A02:2021 |
-| V011 | JWT Vulnerabilities | 🟠 HIGH | A07:2021 |
-| V012 | CSRF | 🟠 HIGH | A01:2021 |
-| V013 | Mass Assignment | 🟠 HIGH | A01:2021 |
-| V014 | Weak Cryptography | 🟠 HIGH | A02:2021 |
-| V015 | Open Redirect | 🟡 MEDIUM | A10:2021 |
-| V016 | Server-Side Request Forgery (SSRF) | 🔴 CRITICAL | A10:2021 |
-| V017 | Prototype Pollution | 🟠 HIGH | A03:2021 |
-| V018 | ReDoS | 🟡 MEDIUM | A04:2021 |
-| V019 | Insecure File Upload | 🟠 HIGH | A03:2021 |
-| V020 | Missing Security Headers | 🟡 MEDIUM | A05:2021 |
+| V001 | SQL Injection | 🔴 CRITICAL | A05:2025 |
+| V002 | Command Injection | 🔴 CRITICAL | A05:2025 |
+| V003 | XSS (Cross-Site Scripting) | 🟠 HIGH | A05:2025 |
+| V004 | Hardcoded Secrets | 🔴 CRITICAL | A04:2025 |
+| V005 | Broken Authentication | 🔴 CRITICAL | A07:2025 |
+| V006 | IDOR / Broken Access Control | 🟠 HIGH | A01:2025 |
+| V007 | Path Traversal | 🟠 HIGH | A01:2025 |
+| V008 | Insecure Deserialization | 🟠 HIGH | A08:2025 |
+| V009 | Missing Rate Limiting | 🟡 MEDIUM | A06:2025 |
+| V010 | Sensitive Data in Logs | 🟠 HIGH | A09:2025 |
+| V011 | JWT Vulnerabilities | 🟠 HIGH | A07:2025 |
+| V012 | CSRF | 🟠 HIGH | A01:2025 |
+| V013 | Mass Assignment | 🟠 HIGH | A01:2025 |
+| V014 | Weak Cryptography | 🟠 HIGH | A04:2025 |
+| V015 | Open Redirect | 🟡 MEDIUM | A01:2025 |
+| V016 | Server-Side Request Forgery (SSRF) | 🔴 CRITICAL | A01:2025 |
+| V017 | Prototype Pollution | 🟠 HIGH | A08:2025 |
+| V018 | ReDoS | 🟡 MEDIUM | A06:2025 |
+| V019 | Insecure File Upload | 🟠 HIGH | A05:2025 |
+| V020 | Missing Security Headers | 🟡 MEDIUM | A02:2025 |
 | V021 | Software Supply Chain Failure | 🔴 CRITICAL | A03:2025 🆕 |
 | V022 | Mishandling of Exceptional Conditions | 🟠 HIGH | A10:2025 🆕 |
 | V023 | Security Misconfiguration | 🟠 HIGH | A02:2025 |
@@ -272,7 +272,7 @@ security testing, dependency scanning, secret scanning, or expert review.
 
 ## References
 
-- [OWASP Top 10 2021](https://owasp.org/Top10/)
+- [OWASP Top 10 2025](https://owasp.org/Top10/2025/en/)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
 - [CWE Top 25](https://cwe.mitre.org/top25/)
 - [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)
