@@ -15,9 +15,9 @@ Supported platforms
   claude    Claude Code  → .mcp.json  +  CLAUDE.md
   cursor    Cursor       → .cursor/mcp.json  +  .cursor/rules/code-security.mdc
   windsurf  Windsurf     → .windsurf/mcp_config.json  +  .windsurf/rules/code-security.md
-  copilot   GitHub Copilot → .github/copilot-instructions.md  (no MCP yet)
+  copilot      GitHub Copilot → .vscode/mcp.json  +  .github/copilot-instructions.md
   codex        OpenAI Codex   → .codex/config.toml  +  AGENTS.md
-  antigravity  Antigravity    → ~/.gemini/config/mcp_config.json (global)
+  antigravity  Antigravity    → ~/.gemini/config/mcp_config.json (global)  +  GEMINI.md
   all          All of the above (default)
 
 Usage
@@ -49,10 +49,10 @@ ALL_PLATFORMS = ["claude", "cursor", "copilot", "windsurf", "codex", "antigravit
 PLATFORM_LABELS = {
     "claude":      "Claude Code    → .mcp.json  +  CLAUDE.md",
     "cursor":      "Cursor         → .cursor/mcp.json  +  .cursor/rules/code-security.mdc",
-    "copilot":     "GitHub Copilot → .github/copilot-instructions.md",
+    "copilot":     "GitHub Copilot → .vscode/mcp.json  +  .github/copilot-instructions.md",
     "windsurf":    "Windsurf       → .windsurf/mcp_config.json  +  .windsurf/rules/code-security.md",
     "codex":       "OpenAI Codex   → .codex/config.toml  +  AGENTS.md",
-    "antigravity": "Antigravity    → ~/.gemini/config/mcp_config.json  (global)",
+    "antigravity": "Antigravity    → ~/.gemini/config/mcp_config.json (global)  +  GEMINI.md",
 }
 
 _BLOCK_START = "<!-- code-security-skill-start -->"
@@ -149,6 +149,33 @@ def _write_mcp_json(config_path: Path, server_py: Path, force: bool) -> str:
     else:
         config_path.parent.mkdir(parents=True, exist_ok=True)
         cfg = {"mcpServers": {"code-security": entry}}
+    config_path.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
+    return f"  ok  mcp config          {config_path}"
+
+
+def _write_vscode_mcp_json(config_path: Path, server_py: Path, force: bool) -> str:
+    """Write / merge a servers entry into a VS Code .vscode/mcp.json config file.
+
+    VS Code GitHub Copilot uses the 'servers' key with an explicit 'type' field,
+    which differs from the 'mcpServers' format used by Claude / Cursor.
+    """
+    entry = {
+        "type": "stdio",
+        "command": sys.executable,
+        "args": [str(server_py)],
+    }
+    if config_path.exists():
+        try:
+            cfg = json.loads(config_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            cfg = {}
+        servers = cfg.setdefault("servers", {})
+        if "code-security" in servers and not force:
+            return f"  --  already present    {config_path}"
+        servers["code-security"] = entry
+    else:
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        cfg = {"servers": {"code-security": entry}}
     config_path.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
     return f"  ok  mcp config          {config_path}"
 
@@ -270,12 +297,21 @@ def install_windsurf(target: Path, force: bool) -> list:
 
 
 def install_copilot(target: Path, force: bool) -> list:
-    # GitHub Copilot does not yet support project-level MCP — static rules only
-    return [_inject_or_replace(
+    results = []
+    # MCP config — .vscode/mcp.json (VS Code GitHub Copilot project-level)
+    results += _ensure_global_server(force)
+    results.append(_write_vscode_mcp_json(
+        target / ".vscode" / "mcp.json",
+        GLOBAL_DIR / "mcp_server.py",
+        force,
+    ))
+    # Static rules — .github/copilot-instructions.md
+    results.append(_inject_or_replace(
         target / ".github" / "copilot-instructions.md",
         _skill_content(),
         force,
-    )]
+    ))
+    return results
 
 
 def install_codex(target: Path, force: bool) -> list:
@@ -293,13 +329,14 @@ def install_codex(target: Path, force: bool) -> list:
 
 
 def install_antigravity(target: Path, force: bool) -> list:
-    # MCP config is global — written to ~/.gemini/config/mcp_config.json
-    # (Antigravity has no project-level rules file)
     results = []
+    # MCP config is global — written to ~/.gemini/config/mcp_config.json
     results += _ensure_global_server(force)
     global_cfg = Path.home() / ".gemini" / "config" / "mcp_config.json"
     results.append(_write_mcp_json(global_cfg, GLOBAL_DIR / "mcp_server.py", force))
-    results.append("  --  note: config is global, applies to all projects")
+    results.append("  --  note: MCP config is global, applies to all projects")
+    # Static rules — GEMINI.md at project root
+    results.append(_inject_or_replace(target / "GEMINI.md", _skill_content(), force))
     return results
 
 
@@ -365,6 +402,27 @@ def _remove_mcp_json_entry(config_path: Path) -> str:
     return f"  ok  removed entry      {config_path}"
 
 
+def _remove_vscode_mcp_json_entry(config_path: Path) -> str:
+    """Remove the code-security entry from a VS Code .vscode/mcp.json (uses 'servers' key)."""
+    if not config_path.exists():
+        return f"  --  not found          {config_path}"
+    try:
+        cfg = json.loads(config_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return f"  !!  invalid JSON       {config_path}"
+    servers = cfg.get("servers", {})
+    if "code-security" not in servers:
+        return f"  --  not present        {config_path}"
+    del servers["code-security"]
+    if not servers:
+        del cfg["servers"]
+    if not cfg:
+        config_path.unlink()
+        return f"  ok  deleted (empty)    {config_path}"
+    config_path.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
+    return f"  ok  removed entry      {config_path}"
+
+
 def _remove_mcp_toml_entry(config_path: Path) -> str:
     if not config_path.exists():
         return f"  --  not found          {config_path}"
@@ -415,7 +473,10 @@ def uninstall_cursor(target: Path) -> list:
 
 
 def uninstall_copilot(target: Path) -> list:
-    return [_remove_block(target / ".github" / "copilot-instructions.md")]
+    return [
+        _remove_vscode_mcp_json_entry(target / ".vscode" / "mcp.json"),
+        _remove_block(target / ".github" / "copilot-instructions.md"),
+    ]
 
 
 def uninstall_windsurf(target: Path) -> list:
@@ -436,7 +497,8 @@ def uninstall_antigravity(target: Path) -> list:
     global_cfg = Path.home() / ".gemini" / "config" / "mcp_config.json"
     return [
         _remove_mcp_json_entry(global_cfg),
-        "  --  note: global config updated",
+        "  --  note: global MCP config updated",
+        _remove_block(target / "GEMINI.md"),
     ]
 
 
@@ -493,7 +555,7 @@ def cmd_install(args):
 
     print("  Done. The skill auto-activates when writing security-sensitive code.")
     print()
-    mcp_platforms = [p for p in platforms if p in ("claude", "cursor", "windsurf", "codex", "antigravity")]
+    mcp_platforms = [p for p in platforms if p in ("claude", "cursor", "copilot", "windsurf", "codex", "antigravity")]
     if mcp_platforms:
         print("  MCP server ready:")
         print(f"    {GLOBAL_DIR / 'mcp_server.py'}")
