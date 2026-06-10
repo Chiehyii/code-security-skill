@@ -30,12 +30,13 @@ function usage(exitCode) {
 
   Options:
     --ai <tool>   AI tool(s) to install for:
-                    claude   Claude Code
-                    cursor   Cursor
-                    copilot  GitHub Copilot
-                    windsurf Windsurf
-                    codex    OpenAI Codex
-                    all      All tools (default)
+                    claude       Claude Code
+                    cursor       Cursor
+                    copilot      GitHub Copilot
+                    windsurf     Windsurf
+                    codex        OpenAI Codex
+                    antigravity  Antigravity (Google)
+                    all          All tools (default)
     --force       Overwrite existing files / upgrade
     --help        Show this message
 

@@ -16,8 +16,9 @@ Supported platforms
   cursor    Cursor       → .cursor/mcp.json  +  .cursor/rules/code-security.mdc
   windsurf  Windsurf     → .windsurf/mcp_config.json  +  .windsurf/rules/code-security.md
   copilot   GitHub Copilot → .github/copilot-instructions.md  (no MCP yet)
-  codex     OpenAI Codex → .codex/config.toml  +  AGENTS.md
-  all       All of the above (default)
+  codex        OpenAI Codex   → .codex/config.toml  +  AGENTS.md
+  antigravity  Antigravity    → ~/.gemini/config/mcp_config.json (global)
+  all          All of the above (default)
 
 Usage
 -----
@@ -43,14 +44,15 @@ TEMPLATES = SOURCE / "templates"
 # Global install directory for the MCP server
 GLOBAL_DIR = Path.home() / ".code-security-skill"
 
-ALL_PLATFORMS = ["claude", "cursor", "copilot", "windsurf", "codex"]
+ALL_PLATFORMS = ["claude", "cursor", "copilot", "windsurf", "codex", "antigravity"]
 
 PLATFORM_LABELS = {
-    "claude":   "Claude Code    → .mcp.json  +  CLAUDE.md",
-    "cursor":   "Cursor         → .cursor/mcp.json  +  .cursor/rules/code-security.mdc",
-    "copilot":  "GitHub Copilot → .github/copilot-instructions.md",
-    "windsurf": "Windsurf       → .windsurf/mcp_config.json  +  .windsurf/rules/code-security.md",
-    "codex":    "OpenAI Codex   → .codex/config.toml  +  AGENTS.md",
+    "claude":      "Claude Code    → .mcp.json  +  CLAUDE.md",
+    "cursor":      "Cursor         → .cursor/mcp.json  +  .cursor/rules/code-security.mdc",
+    "copilot":     "GitHub Copilot → .github/copilot-instructions.md",
+    "windsurf":    "Windsurf       → .windsurf/mcp_config.json  +  .windsurf/rules/code-security.md",
+    "codex":       "OpenAI Codex   → .codex/config.toml  +  AGENTS.md",
+    "antigravity": "Antigravity    → ~/.gemini/config/mcp_config.json  (global)",
 }
 
 _BLOCK_START = "<!-- code-security-skill-start -->"
@@ -290,12 +292,24 @@ def install_codex(target: Path, force: bool) -> list:
     return results
 
 
+def install_antigravity(target: Path, force: bool) -> list:
+    # MCP config is global — written to ~/.gemini/config/mcp_config.json
+    # (Antigravity has no project-level rules file)
+    results = []
+    results += _ensure_global_server(force)
+    global_cfg = Path.home() / ".gemini" / "config" / "mcp_config.json"
+    results.append(_write_mcp_json(global_cfg, GLOBAL_DIR / "mcp_server.py", force))
+    results.append("  --  note: config is global, applies to all projects")
+    return results
+
+
 INSTALLERS = {
-    "claude":   install_claude,
-    "cursor":   install_cursor,
-    "copilot":  install_copilot,
-    "windsurf": install_windsurf,
-    "codex":    install_codex,
+    "claude":      install_claude,
+    "cursor":      install_cursor,
+    "copilot":     install_copilot,
+    "windsurf":    install_windsurf,
+    "codex":       install_codex,
+    "antigravity": install_antigravity,
 }
 
 
