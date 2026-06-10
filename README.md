@@ -67,87 +67,135 @@ user = db.execute(f"SELECT * FROM users WHERE id={user_id}")
 - **15 governed assurance controls** — threat modeling, SAST, DAST, secrets, SBOM, provenance, fuzzing, IaC, incident response, and privacy lifecycle
 - **Validated BM25 + keyword hybrid search engine** — supports common Traditional Chinese queries, explicit no-result responses, and legacy Windows terminals
 - **Auto-activation** — triggers on 50+ keywords including modern ones (llm, prompt, agent, supply chain, kubernetes, graphql, oauth, …)
+- **MCP server** — AI tools can call `search_security()` at runtime for live, query-specific guidance (Claude Code, Cursor, Windsurf, Codex, Antigravity, GitHub Copilot)
 
-### What's New in v2.0
+### What's New in v3.0.0
 
 - 🆕 **OWASP 2025 alignment** — Software Supply Chain Failures (A03) and Mishandling of Exceptional Conditions (A10), SSRF merged into Broken Access Control
 - 🤖 **LLM/AI security** — prompt injection (direct + indirect), insecure output handling, excessive agency, sensitive disclosure
 - 🔌 **API security** — BOLA, BFLA, unrestricted resource consumption
 - 📦 **Supply chain security** — dependency pinning, SCA scanning, typosquatting defense
 - ☁️ **Cloud & container** — IAM least-privilege, secret managers, image scanning
+- 🔗 **MCP server** — live runtime queries from all 6 AI tools via Model Context Protocol
+- 🆕 **Antigravity support** — MCP + static rules (`GEMINI.md`)
+- 🆕 **GitHub Copilot MCP** — `.vscode/mcp.json` project-level MCP support added
 
 ---
 
 ## Installation
 
-Run **one command** from your project root. The skill installs itself into every
-supported AI coding tool automatically.
+### Recommended: npm CLI
 
-### One-liner (Unix / macOS)
+Install the `codesecurity` CLI globally, then run `init` inside any project:
+
+```bash
+npm install -g codesecurity
+cd /path/to/your-project
+codesecurity init
+```
+
+This installs the skill for **all 6 supported AI tools at once**.
+
+#### Install for specific tools only
+
+```bash
+codesecurity init --ai claude
+codesecurity init --ai cursor
+codesecurity init --ai copilot
+codesecurity init --ai windsurf
+codesecurity init --ai codex
+codesecurity init --ai antigravity
+
+# Multiple at once
+codesecurity init --ai claude cursor copilot
+```
+
+#### Re-install / upgrade
+
+```bash
+codesecurity init --force
+```
+
+#### Uninstall
+
+```bash
+# Remove from all tools in this project
+codesecurity uninstall
+
+# Remove from specific tools only
+codesecurity uninstall --ai copilot windsurf
+
+# Also remove the global MCP server (~/.code-security-skill/)
+codesecurity uninstall --global-server
+```
+
+---
+
+### Alternative: Shell one-liner
+
+**Unix / macOS:**
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/YOUR_ORG/code-security-skill/main/install.sh | bash
 ```
 
-### One-liner (Windows PowerShell)
+**Windows PowerShell:**
 
 ```powershell
 irm https://raw.githubusercontent.com/YOUR_ORG/code-security-skill/main/install.ps1 | iex
 ```
 
-### Manual (cross-platform, Python 3)
+---
+
+### Alternative: Manual (Python 3)
 
 ```bash
 git clone --depth 1 https://github.com/YOUR_ORG/code-security-skill /tmp/csk
+
+# All tools
 python3 /tmp/csk/scripts/install_skill.py .
+
+# Specific tools
+python3 /tmp/csk/scripts/install_skill.py . --ai claude
+python3 /tmp/csk/scripts/install_skill.py . --ai claude cursor copilot
+
+# Upgrade existing install
+python3 /tmp/csk/scripts/install_skill.py . --force
 ```
 
-All three commands install for **all supported AI tools at once**.
+---
+
+### Prerequisites
+
+```bash
+python3 --version   # Python 3.x required
+
+# Required for MCP runtime queries
+pip install mcp
+
+# Optional (for MIME type validation)
+pip install python-magic
+```
 
 ---
 
 ### Supported AI tools
 
-| Tool | Files created | Auto-activates? |
-|------|--------------|-----------------|
-| **Claude Code** | `.claude/skills/code-security/` + `CLAUDE.md` | Yes — CLAUDE.md is always loaded |
-| **Cursor** | `.cursor/rules/code-security.mdc` | Yes — `alwaysApply: true` |
-| **GitHub Copilot** | `.github/copilot-instructions.md` | Yes — auto-loaded by Copilot Chat |
-| **Windsurf** | `.windsurf/rules/code-security.md` | Yes — `trigger: always_on` |
-| **OpenAI Codex** | `AGENTS.md` | Yes — auto-loaded by Codex CLI |
+Every tool receives two layers of protection: **static rules** (always-on baseline) and **MCP** (live runtime queries via `search_security()`).
+
+| Tool | Static rules file | MCP config | Auto-activates? |
+|------|------------------|------------|-----------------|
+| **Claude Code** | `CLAUDE.md` | `.mcp.json` | Yes — CLAUDE.md is always loaded |
+| **Cursor** | `.cursor/rules/code-security.mdc` | `.cursor/mcp.json` | Yes — `alwaysApply: true` |
+| **GitHub Copilot** | `.github/copilot-instructions.md` | `.vscode/mcp.json` | Yes — auto-loaded by Copilot Chat |
+| **Windsurf** | `.windsurf/rules/code-security.md` | `.windsurf/mcp_config.json` | Yes — `trigger: always_on` |
+| **OpenAI Codex** | `AGENTS.md` | `.codex/config.toml` | Yes — auto-loaded by Codex CLI |
+| **Antigravity** | `GEMINI.md` | `~/.gemini/config/mcp_config.json` | Yes — GEMINI.md is always loaded |
+
+The MCP server is installed once to `~/.code-security-skill/` and shared across all projects.
 
 For other tools (Kiro, Continue, Aider, etc.) copy the content of
 `.github/copilot-instructions.md` into the tool's system-prompt or rules file.
-
----
-
-### Install for specific tools only
-
-```bash
-python3 /tmp/csk/scripts/install_skill.py . --ai claude
-python3 /tmp/csk/scripts/install_skill.py . --ai cursor
-python3 /tmp/csk/scripts/install_skill.py . --ai copilot
-python3 /tmp/csk/scripts/install_skill.py . --ai windsurf
-python3 /tmp/csk/scripts/install_skill.py . --ai codex
-
-# Multiple at once
-python3 /tmp/csk/scripts/install_skill.py . --ai claude cursor copilot
-```
-
-### Re-install / upgrade
-
-```bash
-python3 /tmp/csk/scripts/install_skill.py . --force
-```
-
-### Prerequisites
-
-```bash
-python3 --version  # Python 3.x required
-
-# Optional (for MIME type validation examples)
-pip install python-magic
-```
 
 `src/code-security` is the only source of truth in this repository. Generated
 files (`.claude/skills/`, `.cursor/rules/`, etc.) are intentionally not committed.
@@ -158,7 +206,7 @@ files (`.claude/skills/`, `.cursor/rules/`, etc.) are intentionally not committe
 
 ### Auto-activate (Recommended)
 
-The skill activates automatically when you ask Claude Code for any feature involving security-sensitive code:
+The skill activates automatically when you ask an AI tool for any feature involving security-sensitive code:
 
 ```
 Build a login system with JWT
@@ -290,25 +338,33 @@ python3 -m unittest discover -s tests -v
 code-security-skill/
 ├── README.md
 ├── CLAUDE.md
+├── package.json                           ← npm package (codesecurity CLI)
+├── install.sh                             ← Unix/macOS one-liner installer
+├── install.ps1                            ← Windows PowerShell one-liner installer
+├── bin/
+│   └── codesecurity.js                    ← npm CLI (init / uninstall)
 ├── scripts/
-│   └── install_skill.py               ← Install source into another project
+│   └── install_skill.py                   ← Install source into another project
 ├── src/
 │   └── code-security/
 │       ├── data/
-│       │   ├── vulnerabilities.csv    ← 50 vulnerability profiles
-│       │   ├── rules.csv              ← 51 secure engineering rules
-│       │   ├── checklists.csv         ← 26 feature checklists
-│       │   ├── crypto.csv             ← 12 cryptography guides
-│       │   ├── asvs.csv               ← ASVS 5.0.0 chapter index
-│       │   ├── cwe_top25.csv          ← MITRE CWE Top 25 2025
-│       │   ├── cwe_extended.csv       ← precise additional CWE mappings
-│       │   └── assurance.csv          ← governed assurance controls
+│       │   ├── vulnerabilities.csv        ← 50 vulnerability profiles
+│       │   ├── rules.csv                  ← 51 secure engineering rules
+│       │   ├── checklists.csv             ← 26 feature checklists
+│       │   ├── crypto.csv                 ← 12 cryptography guides
+│       │   ├── asvs.csv                   ← ASVS 5.0.0 chapter index
+│       │   ├── cwe_top25.csv              ← MITRE CWE Top 25 2025
+│       │   ├── cwe_extended.csv           ← precise additional CWE mappings
+│       │   └── assurance.csv              ← governed assurance controls
 │       ├── scripts/
-│       │   ├── search.py              ← BM25 search engine
-│       │   └── validate_data.py       ← schema and coverage validation
-│       └── templates/
-│           ├── skill-content.md       ← Core skill instructions
-│           └── claude.json            ← Platform config
+│       │   ├── search.py                  ← BM25 search engine
+│       │   └── validate_data.py           ← schema and coverage validation
+│       ├── templates/
+│       │   ├── skill-content.md           ← Core skill instructions
+│       │   └── claude.json                ← Platform config
+│       └── mcp_server.py                  ← MCP server (shared across tools)
+└── tests/
+    └── test_search.py                     ← Automated test suite
 ```
 
 ---
