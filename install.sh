@@ -3,7 +3,7 @@
 #
 # Usage (run from your project root):
 #
-#   curl -sSL https://raw.githubusercontent.com/YOUR_ORG/code-security-skill/main/install.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/Chiehyii/code-security-skill/main/install.sh | bash
 #
 # Pass extra flags after '--':
 #
@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-REPO_URL="https://github.com/YOUR_ORG/code-security-skill"
+REPO_URL="https://github.com/Chiehyii/code-security-skill"
 TMP_DIR="$(mktemp -d)"
 
 cleanup() { rm -rf "$TMP_DIR"; }

@@ -2,11 +2,11 @@
 #
 # Usage (run from your project root in PowerShell):
 #
-#   irm https://raw.githubusercontent.com/YOUR_ORG/code-security-skill/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/Chiehyii/code-security-skill/main/install.ps1 | iex
 #
 # To pass flags, use the script block form:
 #
-#   & ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/YOUR_ORG/code-security-skill/main/install.ps1'))) -ai claude
+#   & ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/Chiehyii/code-security-skill/main/install.ps1'))) -ai claude
 #   & ([scriptblock]::Create((irm '...'))) -ai cursor,copilot -force
 #
 # Requires: git, python3
@@ -17,7 +17,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$RepoUrl = "https://github.com/YOUR_ORG/code-security-skill"
+$RepoUrl = "https://github.com/Chiehyii/code-security-skill"
 $TmpDir  = Join-Path $env:TEMP "code-security-skill-$(Get-Random)"
 
 try {

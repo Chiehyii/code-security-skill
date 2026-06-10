@@ -1,92 +1,124 @@
-# 🛡️ Code Security Skill
+# Code Security Skill
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](package.json)
 [![OWASP Top 10](https://img.shields.io/badge/OWASP_Top_10-2025-red?style=for-the-badge)](https://owasp.org/Top10/2025/en/)
-[![50 Vulnerability Profiles](https://img.shields.io/badge/vulnerability_profiles-50-orange?style=for-the-badge)]()
-[![Python 3.x](https://img.shields.io/badge/python-3.x-yellow?style=for-the-badge&logo=python&logoColor=white)]()
+[![Vulnerability Profiles](https://img.shields.io/badge/vulnerability_profiles-50-orange?style=for-the-badge)](src/code-security/data/vulnerabilities.csv)
+[![Python 3](https://img.shields.io/badge/python-3.x-yellow?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
-> An AI Skill that automatically applies military-grade security standards when engineers write code.  
-> No more SQL injection, hardcoded secrets, broken authentication, or XSS — by default, not by request.
+Code Security Skill is a security knowledge base and MCP server for AI coding
+assistants. It gives supported assistants always-on secure-coding instructions
+and lets them retrieve feature-specific security guidance before writing or
+reviewing security-sensitive code.
 
----
-
-## The Problem
-
-Engineers write insecure code — not because they're careless, but because security patterns are easy to forget, verbose to implement, and rarely enforced by default.
-
-```python
-# An engineer writes this innocently:
-user = db.execute(f"SELECT * FROM users WHERE id={user_id}")
-
-# They didn't know this is a textbook SQL injection vulnerability.
-```
-
-**Code Security Skill fixes this at the source — before the code is written.**
-
----
+It is a secure-development aid, not a vulnerability scanner. Use it together
+with threat modeling, code review, tests, SAST, DAST, dependency scanning,
+secret scanning, and expert security review.
 
 ## How It Works
 
-```
-┌───────────────────────────────────────────────────────────┐
-│  ENGINEER SAYS: "Build me a login system"                 │
-└───────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌───────────────────────────────────────────────────────────┐
-│  SKILL ACTIVATES                                          │
-│  → Identifies feature type (auth)                         │
-│  → Loads vulnerability profile (A01, A02, A07)            │
-│  → Loads 10-item auth security checklist                  │
-│  → Selects secure libraries (bcrypt, secrets)             │
-└───────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌───────────────────────────────────────────────────────────┐
-│  AI WRITES SECURE CODE BY DEFAULT                         │
-│  ✅ bcrypt password hashing (rounds=12)                   │
-│  ✅ Rate limiting (5 attempts/minute)                     │
-│  ✅ Cryptographically random session tokens               │
-│  ✅ HttpOnly + Secure + SameSite cookies                  │
-│  ✅ Generic error messages (no username enumeration)      │
-│  ✅ Security notes block appended to output               │
-└───────────────────────────────────────────────────────────┘
+```text
+Developer asks an AI assistant to build or review a feature
+                         |
+                         v
+        Always-on static security instructions are loaded
+                         |
+                         v
+       AI calls the MCP tool search_security when appropriate
+                         |
+                         v
+      MCP server searches the versioned CSV knowledge base
+                         |
+                         v
+ AI applies relevant checklists, vulnerability guidance, and rules
 ```
 
----
+The project provides two complementary layers:
 
-## Features
+1. **Static rules**: platform-specific instruction files that remind the AI to
+   apply secure-development practices and query the knowledge base.
+2. **MCP retrieval**: a local stdio MCP server exposing
+   `search_security(query, mode, lang)` for topic-specific guidance.
 
-- **50 vulnerability profiles** — includes complete category coverage for OWASP API Security Top 10 2023 and OWASP LLM Top 10 2025
-- **26 Feature-specific security checklists** — Auth, API, NoSQL, LLM, CI/CD, privacy, WebSocket, serverless, mobile, native memory safety, incident response, and more
-- **51 Language, framework & engineering rules** — Python, JS/TS, PHP, Java, Go, Ruby, C#, C/C++, Rust, Terraform, and shared practices
-- **12 Cryptography guides** — bcrypt, argon2, AES-256-GCM, HMAC, JWT, mTLS, **secrets management, KMS, secure token storage**
-- **OWASP ASVS 5.0.0 index** — searchable coverage of all 17 chapters and the official 345-requirement total
-- **MITRE CWE Top 25 2025 index** — complete ranked root-cause coverage, including native memory-safety weaknesses
-- **Extended CWE mappings** — precise searchable mappings for SSTI (`CWE-1336`) and NoSQL Injection (`CWE-943`)
-- **15 governed assurance controls** — threat modeling, SAST, DAST, secrets, SBOM, provenance, fuzzing, IaC, incident response, and privacy lifecycle
-- **Validated BM25 + keyword hybrid search engine** — supports common Traditional Chinese queries, explicit no-result responses, and legacy Windows terminals
-- **Auto-activation** — triggers on 50+ keywords including modern ones (llm, prompt, agent, supply chain, kubernetes, graphql, oauth, …)
-- **MCP server** — AI tools can call `search_security()` at runtime for live, query-specific guidance (Claude Code, Cursor, Windsurf, Codex, Antigravity, GitHub Copilot)
+The MCP server retrieves guidance. It does not automatically scan source code,
+prove that generated code is secure, or replace security testing tools.
 
-### What's New in v3.0.0
+## Knowledge Base
 
-- 🆕 **OWASP 2025 alignment** — Software Supply Chain Failures (A03) and Mishandling of Exceptional Conditions (A10), SSRF merged into Broken Access Control
-- 🤖 **LLM/AI security** — prompt injection (direct + indirect), insecure output handling, excessive agency, sensitive disclosure
-- 🔌 **API security** — BOLA, BFLA, unrestricted resource consumption
-- 📦 **Supply chain security** — dependency pinning, SCA scanning, typosquatting defense
-- ☁️ **Cloud & container** — IAM least-privilege, secret managers, image scanning
-- 🔗 **MCP server** — live runtime queries from all 6 AI tools via Model Context Protocol
-- 🆕 **Antigravity support** — MCP + static rules (`GEMINI.md`)
-- 🆕 **GitHub Copilot MCP** — `.vscode/mcp.json` project-level MCP support added
+`src/code-security` is the repository's single source of truth.
 
----
+| Dataset | Coverage |
+|---|---:|
+| Vulnerability profiles | 50 |
+| Feature security checklists | 26 |
+| Language, framework, and engineering rules | 51 |
+| Cryptography guides | 12 |
+| OWASP ASVS 5.0.0 chapter index | 17 chapters / 345 requirements |
+| MITRE CWE Top 25 2025 | 25 ranked weaknesses |
+| Extended CWE mappings | SSTI (`CWE-1336`) and NoSQL Injection (`CWE-943`) |
+| Governed assurance controls | 15 |
+
+The validation script verifies complete category coverage for:
+
+- OWASP Web Application Top 10 2025
+- OWASP API Security Top 10 2023
+- OWASP Top 10 for LLM Applications 2025
+- OWASP ASVS 5.0.0 chapter totals
+- MITRE CWE Top 25 2025
+
+The vulnerability profiles also include Server-Side Template Injection (SSTI),
+NoSQL Injection, supply-chain failures, cloud and container
+misconfiguration, API authorization failures, and LLM-specific risks.
+
+## Supported AI Tools
+
+| Tool | Static rules | MCP configuration |
+|---|---|---|
+| Claude Code | `CLAUDE.md` and local skill copy | `.mcp.json` |
+| Cursor | `.cursor/rules/code-security.mdc` | `.cursor/mcp.json` |
+| GitHub Copilot in VS Code | `.github/copilot-instructions.md` | `.vscode/mcp.json` |
+| Windsurf | `.windsurf/rules/code-security.md` | `.windsurf/mcp_config.json` |
+| OpenAI Codex | `AGENTS.md` | `.codex/config.toml` |
+| Antigravity | `GEMINI.md` | `~/.gemini/config/mcp_config.json` |
+
+The installer copies the shared MCP server and knowledge base to
+`~/.code-security-skill/`. Platform configuration files then start that local
+server with the Python interpreter used during installation.
+
+Generated project files are intentionally not committed to this source
+repository.
+
+## Prerequisites
+
+- Python 3
+- The Python `mcp` package for runtime MCP queries
+- Node.js 14 or later only when using the npm CLI
+- Git only when installing directly from the repository
+
+Install the MCP runtime dependency:
+
+```bash
+python -m pip install mcp
+```
+
+Optional MIME type validation support:
+
+```bash
+python -m pip install python-magic
+```
+
+On systems where the interpreter command is `python3`, replace `python` with
+`python3` in the examples below. On Windows, `py -3` may also be used.
 
 ## Installation
 
-### Recommended: npm CLI
+Run installation commands from the root of the **target project**, not from
+this source repository. The installer intentionally refuses to install into
+the source repository to avoid generating duplicate knowledge-base copies.
 
-Install the `codesecurity` CLI globally, then run `init` inside any project:
+### npm CLI
+
+After the `codesecurity` package is published or installed from a local
+package, initialize the current project:
 
 ```bash
 npm install -g codesecurity
@@ -94,309 +126,228 @@ cd /path/to/your-project
 codesecurity init
 ```
 
-This installs the skill for **all 6 supported AI tools at once**.
-
-#### Install for specific tools only
+Install only selected integrations:
 
 ```bash
 codesecurity init --ai claude
-codesecurity init --ai cursor
-codesecurity init --ai copilot
-codesecurity init --ai windsurf
-codesecurity init --ai codex
+codesecurity init --ai cursor copilot codex
 codesecurity init --ai antigravity
-
-# Multiple at once
-codesecurity init --ai claude cursor copilot
 ```
 
-#### Re-install / upgrade
+Refresh existing generated files and MCP entries:
 
 ```bash
 codesecurity init --force
 ```
 
-#### Uninstall
+### Directly From This Repository
 
 ```bash
-# Remove from all tools in this project
+git clone --depth 1 https://github.com/Chiehyii/code-security-skill.git
+cd /path/to/your-project
+python /path/to/code-security-skill/scripts/install_skill.py install .
+```
+
+Install selected integrations:
+
+```bash
+python /path/to/code-security-skill/scripts/install_skill.py install . --ai claude
+python /path/to/code-security-skill/scripts/install_skill.py install . --ai cursor copilot
+python /path/to/code-security-skill/scripts/install_skill.py install . --force
+```
+
+Valid `--ai` values are `claude`, `cursor`, `copilot`, `windsurf`, `codex`,
+`antigravity`, and `all`. The default is `all`.
+
+### Uninstall
+
+Using the npm CLI:
+
+```bash
 codesecurity uninstall
-
-# Remove from specific tools only
-codesecurity uninstall --ai copilot windsurf
-
-# Also remove the global MCP server (~/.code-security-skill/)
+codesecurity uninstall --ai cursor copilot
 codesecurity uninstall --global-server
 ```
 
----
-
-### Alternative: Shell one-liner
-
-**Unix / macOS:**
+Using the Python installer:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/YOUR_ORG/code-security-skill/main/install.sh | bash
+python /path/to/code-security-skill/scripts/install_skill.py uninstall .
+python /path/to/code-security-skill/scripts/install_skill.py uninstall . --ai codex
+python /path/to/code-security-skill/scripts/install_skill.py uninstall . --global-server
 ```
 
-**Windows PowerShell:**
-
-```powershell
-irm https://raw.githubusercontent.com/YOUR_ORG/code-security-skill/main/install.ps1 | iex
-```
-
----
-
-### Alternative: Manual (Python 3)
-
-```bash
-git clone --depth 1 https://github.com/YOUR_ORG/code-security-skill /tmp/csk
-
-# All tools
-python3 /tmp/csk/scripts/install_skill.py .
-
-# Specific tools
-python3 /tmp/csk/scripts/install_skill.py . --ai claude
-python3 /tmp/csk/scripts/install_skill.py . --ai claude cursor copilot
-
-# Upgrade existing install
-python3 /tmp/csk/scripts/install_skill.py . --force
-```
-
----
-
-### Prerequisites
-
-```bash
-python3 --version   # Python 3.x required
-
-# Required for MCP runtime queries
-pip install mcp
-
-# Optional (for MIME type validation)
-pip install python-magic
-```
-
----
-
-### Supported AI tools
-
-Every tool receives two layers of protection: **static rules** (always-on baseline) and **MCP** (live runtime queries via `search_security()`).
-
-| Tool | Static rules file | MCP config | Auto-activates? |
-|------|------------------|------------|-----------------|
-| **Claude Code** | `CLAUDE.md` | `.mcp.json` | Yes — CLAUDE.md is always loaded |
-| **Cursor** | `.cursor/rules/code-security.mdc` | `.cursor/mcp.json` | Yes — `alwaysApply: true` |
-| **GitHub Copilot** | `.github/copilot-instructions.md` | `.vscode/mcp.json` | Yes — auto-loaded by Copilot Chat |
-| **Windsurf** | `.windsurf/rules/code-security.md` | `.windsurf/mcp_config.json` | Yes — `trigger: always_on` |
-| **OpenAI Codex** | `AGENTS.md` | `.codex/config.toml` | Yes — auto-loaded by Codex CLI |
-| **Antigravity** | `GEMINI.md` | `~/.gemini/config/mcp_config.json` | Yes — GEMINI.md is always loaded |
-
-The MCP server is installed once to `~/.code-security-skill/` and shared across all projects.
-
-For other tools (Kiro, Continue, Aider, etc.) copy the content of
-`.github/copilot-instructions.md` into the tool's system-prompt or rules file.
-
-`src/code-security` is the only source of truth in this repository. Generated
-files (`.claude/skills/`, `.cursor/rules/`, etc.) are intentionally not committed.
-
----
+`--global-server` also removes the shared `~/.code-security-skill/` directory.
+Do not use it while another project still relies on that shared MCP server.
 
 ## Usage
 
-### Auto-activate (Recommended)
+After installation, restart or reload the AI tool so it discovers the new
+rules and MCP configuration. Then request normal development or review work:
 
-The skill activates automatically when you ask an AI tool for any feature involving security-sensitive code:
-
+```text
+Build a login system with secure session management.
+Create an API endpoint for updating user profiles.
+Review this file-upload handler for security issues.
+Implement a password-reset flow.
+Check this MongoDB query for NoSQL injection.
 ```
-Build a login system with JWT
-Create an API endpoint for user profiles
-Add file upload to the dashboard
-Write a password reset flow
-Set up payment processing with Stripe
+
+The static rules instruct the AI to call `search_security` before handling
+security-sensitive features. A typical MCP request looks like:
+
+```json
+{
+  "query": "login authentication session",
+  "mode": "all",
+  "lang": "python"
+}
 ```
 
-### Manual Search Commands
+Available modes:
+
+| Mode | Result |
+|---|---|
+| `all` | Combined security report |
+| `checklist` | Feature-specific implementation checklist |
+| `vuln` | Vulnerability profiles and fix patterns |
+| `rules` | Language-specific secure-coding rules |
+| `crypto` | Cryptography recommendations |
+| `asvs` | OWASP ASVS verification areas |
+| `cwe` | CWE root causes |
+| `control` | Assurance controls such as SAST, DAST, SBOM, and fuzzing |
+
+### Manual Knowledge-Base Search
+
+The same search engine can be used without an MCP client:
 
 ```bash
-# Full security report for a feature
-python3 .claude/skills/code-security/scripts/search.py "login authentication" --lang python
+# Combined report
+python src/code-security/scripts/search.py "login authentication" --lang python
 
-# Get security checklist only
-python3 .claude/skills/code-security/scripts/search.py "file upload" --mode checklist
-
-# Look up a vulnerability
-python3 .claude/skills/code-security/scripts/search.py "sql injection" --mode vuln
-
-# Get crypto recommendations
-python3 .claude/skills/code-security/scripts/search.py "password hashing" --mode crypto
-
-# Language-specific rules
-python3 .claude/skills/code-security/scripts/search.py "database query" --mode rules --lang javascript
-
-# Verification standards and security assurance
-python3 .claude/skills/code-security/scripts/search.py "authentication" --mode asvs
-python3 .claude/skills/code-security/scripts/search.py "memory buffer" --mode cwe
-python3 .claude/skills/code-security/scripts/search.py "sast sbom secret scanning" --mode control
-
-# Validate every source knowledge-base CSV before release
-python3 src/code-security/scripts/validate_data.py
-
-# Run the automated test suite
-python3 -m unittest discover -s tests -v
+# Focused searches
+python src/code-security/scripts/search.py "file upload" --mode checklist
+python src/code-security/scripts/search.py "sql injection" --mode vuln
+python src/code-security/scripts/search.py "password hashing" --mode crypto
+python src/code-security/scripts/search.py "database query" --mode rules --lang javascript
+python src/code-security/scripts/search.py "authentication" --mode asvs
+python src/code-security/scripts/search.py "memory buffer" --mode cwe
+python src/code-security/scripts/search.py "sast sbom secret scanning" --mode control
 ```
 
----
+Search results are ranked using a BM25 and keyword hybrid search. Common
+Traditional Chinese security queries are supported.
 
-## Example Output
+## Validation and Tests
 
-```
-════════════════════════════════════════════════════════════════════════════════════════
-  🛡️  CODE SECURITY SKILL — SECURITY ANALYSIS REPORT
-  Query: "login authentication"  |  Language: python
-════════════════════════════════════════════════════════════════════════════════════════
+Validate all CSV schemas, required standards coverage, ASVS totals, CWE
+coverage, and assurance-control review dates:
 
-────────────────────────────────────────────────────────────────────────────────────────
-  📋  FEATURE SECURITY CHECKLIST  (apply before writing any code)
-────────────────────────────────────────────────────────────────────────────────────────
-  📋 Authentication System — Security Checklist
-     Severity if skipped: 🔴 CRITICAL
-
-     ✅ [AUTH-1] Hash passwords with bcrypt/argon2 (never MD5/SHA1/plain)
-     ✅ [AUTH-2] Implement account lockout after N failed attempts
-     ✅ [AUTH-3] Enforce password complexity (min 8 chars, mixed case, numbers, symbols)
-     ✅ [AUTH-4] Use secure session tokens (cryptographically random, 128-bit+)
-     ✅ [AUTH-5] Set session timeout and re-auth for sensitive actions
-     ✅ [AUTH-6] Implement MFA/2FA for sensitive accounts
-     ✅ [AUTH-7] Log all auth events (success + failure) without logging passwords
-     ✅ [AUTH-8] Use HTTPS only (reject HTTP for auth endpoints)
-     ✅ [AUTH-9] Prevent username enumeration (same response for unknown vs wrong)
-     ✅ [AUTH-10] Implement CSRF protection on all auth forms
-
-     📦 PY libs: bcrypt/argon2-cffi
-     📦 JS libs: bcrypt
-
-────────────────────────────────────────────────────────────────────────────────────────
-  ⚠️   VULNERABILITIES TO GUARD AGAINST
-────────────────────────────────────────────────────────────────────────────────────────
-  🔴 [V005] Broken Authentication — CRITICAL
-     Category: Auth Failures | OWASP: A07:2025
-     Risk: Weak or missing authentication mechanisms
-     Fix: Use bcrypt/argon2 for passwords; implement MFA; secure session management
-  ...
+```bash
+python src/code-security/scripts/validate_data.py
 ```
 
----
+Run the automated tests:
 
-## Vulnerability Coverage
-
-| ID | Vulnerability | Severity | OWASP |
-|----|--------------|----------|-------|
-| V001 | SQL Injection | 🔴 CRITICAL | A05:2025 |
-| V002 | Command Injection | 🔴 CRITICAL | A05:2025 |
-| V003 | XSS (Cross-Site Scripting) | 🟠 HIGH | A05:2025 |
-| V004 | Hardcoded Secrets | 🔴 CRITICAL | A04:2025 |
-| V005 | Broken Authentication | 🔴 CRITICAL | A07:2025 |
-| V006 | IDOR / Broken Access Control | 🟠 HIGH | A01:2025 |
-| V007 | Path Traversal | 🟠 HIGH | A01:2025 |
-| V008 | Insecure Deserialization | 🟠 HIGH | A08:2025 |
-| V009 | Missing Rate Limiting | 🟡 MEDIUM | A06:2025 |
-| V010 | Sensitive Data in Logs | 🟠 HIGH | A09:2025 |
-| V011 | JWT Vulnerabilities | 🟠 HIGH | A07:2025 |
-| V012 | CSRF | 🟠 HIGH | A01:2025 |
-| V013 | Mass Assignment | 🟠 HIGH | A01:2025 |
-| V014 | Weak Cryptography | 🟠 HIGH | A04:2025 |
-| V015 | Open Redirect | 🟡 MEDIUM | A01:2025 |
-| V016 | Server-Side Request Forgery (SSRF) | 🔴 CRITICAL | A01:2025 |
-| V017 | Prototype Pollution | 🟠 HIGH | A08:2025 |
-| V018 | ReDoS | 🟡 MEDIUM | A06:2025 |
-| V019 | Insecure File Upload | 🟠 HIGH | A05:2025 |
-| V020 | Missing Security Headers | 🟡 MEDIUM | A02:2025 |
-| V021 | Software Supply Chain Failure | 🔴 CRITICAL | A03:2025 🆕 |
-| V022 | Mishandling of Exceptional Conditions | 🟠 HIGH | A10:2025 🆕 |
-| V023 | Security Misconfiguration | 🟠 HIGH | A02:2025 |
-| V024 | Prompt Injection (LLM) | 🔴 CRITICAL | LLM01:2025 🤖 |
-| V025 | Insecure LLM Output Handling | 🟠 HIGH | LLM05:2025 🤖 |
-| V026 | Excessive Agency (LLM) | 🟠 HIGH | LLM06:2025 🤖 |
-| V027 | Sensitive Information Disclosure (LLM) | 🟠 HIGH | LLM02:2025 🤖 |
-| V028 | Broken Object Level Authorization (BOLA) | 🔴 CRITICAL | API1:2023 🔌 |
-| V029 | Broken Function Level Authorization (BFLA) | 🟠 HIGH | API5:2023 🔌 |
-| V030 | Unrestricted Resource Consumption (API) | 🟡 MEDIUM | API4:2023 🔌 |
-| V031 | XML External Entity (XXE) | 🟠 HIGH | A05:2025 |
-| V032 | Insufficient Logging & Monitoring | 🟡 MEDIUM | A09:2025 |
-| V033 | Race Condition / TOCTOU | 🟠 HIGH | CWE-362 |
-| V034 | Insecure Cookie Configuration | 🟡 MEDIUM | A02:2025 |
-| V035 | Container & Cloud Misconfiguration | 🟠 HIGH | A02:2025 ☁️ |
-| V036–V040, V047–V048 | Remaining OWASP API Security Top 10 2023 categories | 🟡–🔴 | API2/3/6/7/8/9/10:2023 |
-| V041–V046 | Remaining OWASP LLM Top 10 2025 categories | 🟡–🟠 | LLM03/04/07/08/09/10:2025 |
-
----
-
-## File Structure
-
+```bash
+python -m unittest discover -s tests -v
 ```
+
+GitHub Actions runs both commands on every push and pull request. The current
+workflow validates the knowledge base and Python search behavior; it does not
+yet perform end-to-end tests of every AI integration or act as a project-wide
+SAST scanner.
+
+## Repository Structure
+
+```text
 code-security-skill/
-├── README.md
-├── CLAUDE.md
-├── package.json                           ← npm package (codesecurity CLI)
-├── install.sh                             ← Unix/macOS one-liner installer
-├── install.ps1                            ← Windows PowerShell one-liner installer
-├── bin/
-│   └── codesecurity.js                    ← npm CLI (init / uninstall)
-├── scripts/
-│   └── install_skill.py                   ← Install source into another project
-├── src/
-│   └── code-security/
-│       ├── data/
-│       │   ├── vulnerabilities.csv        ← 50 vulnerability profiles
-│       │   ├── rules.csv                  ← 51 secure engineering rules
-│       │   ├── checklists.csv             ← 26 feature checklists
-│       │   ├── crypto.csv                 ← 12 cryptography guides
-│       │   ├── asvs.csv                   ← ASVS 5.0.0 chapter index
-│       │   ├── cwe_top25.csv              ← MITRE CWE Top 25 2025
-│       │   ├── cwe_extended.csv           ← precise additional CWE mappings
-│       │   └── assurance.csv              ← governed assurance controls
-│       ├── scripts/
-│       │   ├── search.py                  ← BM25 search engine
-│       │   └── validate_data.py           ← schema and coverage validation
-│       ├── templates/
-│       │   ├── skill-content.md           ← Core skill instructions
-│       │   └── claude.json                ← Platform config
-│       └── mcp_server.py                  ← MCP server (shared across tools)
-└── tests/
-    └── test_search.py                     ← Automated test suite
+|-- README.md
+|-- package.json
+|-- bin/
+|   `-- codesecurity.js              # npm CLI
+|-- scripts/
+|   `-- install_skill.py             # Multi-platform installer/uninstaller
+|-- src/
+|   `-- code-security/
+|       |-- data/                    # Versioned security knowledge base
+|       |-- scripts/
+|       |   |-- search.py            # BM25 and keyword search
+|       |   `-- validate_data.py     # Schema and coverage validation
+|       |-- templates/               # Always-on AI instruction templates
+|       `-- mcp_server.py            # Local stdio MCP server
+|-- tests/
+|   `-- test_search.py
+`-- .github/workflows/test.yml
 ```
 
----
+## Troubleshooting
+
+### The MCP server does not appear
+
+1. Confirm `python -m pip show mcp` succeeds.
+2. Confirm `~/.code-security-skill/mcp_server.py` exists.
+3. Inspect the platform-specific MCP configuration listed above.
+4. Restart or reload the AI coding tool.
+5. Re-run installation with `--force` if the configuration is stale.
+
+### Python is not found
+
+Try `python3` on Unix-like systems or `py -3` on Windows. Ensure the selected
+interpreter is available on `PATH`.
+
+### The AI did not call `search_security`
+
+MCP tool invocation is controlled by the AI client. Ask it explicitly to use
+`search_security`, confirm the static rules file is loaded, and verify that the
+client has enabled the `code-security` MCP server.
+
+### Installing into this repository fails
+
+This is intentional. Run the installer from a separate target project. The
+repository keeps only `src/code-security` as its source of truth.
+
+## Security Model and Limitations
+
+This project helps AI assistants retrieve and apply secure-development
+guidance. It cannot guarantee vulnerability-free code and does not:
+
+- automatically scan every source file;
+- execute SAST, DAST, SCA, secret scanning, fuzzing, or penetration tests;
+- verify runtime configuration or infrastructure;
+- replace project-specific threat modeling or expert review.
+
+For production systems, enforce security independently in CI/CD and during
+review. Treat AI-generated security decisions as recommendations that require
+verification.
 
 ## Contributing
 
-PRs welcome! Areas to contribute:
-- More vulnerability patterns
-- Additional language rules (Rust, Swift, Kotlin, Elixir)
-- Framework-specific rules (Django, Rails, Laravel, Spring Boot, NestJS)
-- More feature checklists (OAuth2, WebSockets, GraphQL, gRPC)
+Contributions are welcome. Useful areas include:
 
-This skill is a secure-development aid, not a replacement for threat modeling,
-security testing, dependency scanning, secret scanning, or expert review.
+- vulnerability profiles and precise CWE mappings;
+- additional language and framework rules;
+- new feature-specific security checklists;
+- MCP and installer integration tests;
+- references, test cases, and knowledge-base validation.
 
----
+Before submitting changes:
+
+```bash
+python src/code-security/scripts/validate_data.py
+python -m unittest discover -s tests -v
+```
 
 ## References
 
 - [OWASP Top 10 2025](https://owasp.org/Top10/2025/en/)
+- [OWASP API Security Top 10 2023](https://owasp.org/API-Security/editions/2023/en/0x11-t10/)
+- [OWASP Top 10 for LLM Applications](https://genai.owasp.org/llm-top-10/)
 - [OWASP ASVS 5.0.0](https://github.com/OWASP/ASVS/tree/v5.0.0)
-- [MITRE CWE Top 25 2025](https://cwe.mitre.org/top25/archive/2025/2025_cwe_top25.html)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
-- [CWE Top 25](https://cwe.mitre.org/top25/)
+- [MITRE CWE Top 25 2025](https://cwe.mitre.org/top25/archive/2025/2025_cwe_top25.html)
 - [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)
-
----
 
 ## License
 
-MIT License — Use freely, contribute back.
-
----
-
-*Inspired by [UI/UX Pro Max Skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) — bringing the same "intelligence by default" philosophy to application security.*
+MIT, as declared in [`package.json`](package.json).
