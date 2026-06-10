@@ -3,8 +3,18 @@
   "version": "3.0.0",
   "description": "Secure-coding knowledge base and MCP server for Claude Code, Cursor, GitHub Copilot, Windsurf, OpenAI Codex, and Antigravity",
   "keywords": [
-    "security", "owasp", "mcp", "claude-code", "cursor",
-    "copilot", "windsurf", "codex", "antigravity", "skill", "appsec", "devsecops"
+    "security",
+    "owasp",
+    "mcp",
+    "claude-code",
+    "cursor",
+    "copilot",
+    "windsurf",
+    "codex",
+    "antigravity",
+    "skill",
+    "appsec",
+    "devsecops"
   ],
   "homepage": "https://github.com/Chiehyii/code-security-skill",
   "repository": {
@@ -13,14 +23,21 @@
   },
   "license": "MIT",
   "bin": {
-    "codesecurity": "./bin/codesecurity.js"
+    "codesecurity": "bin/codesecurity.js"
   },
   "files": [
-    "bin/",
-    "src/",
-    "scripts/"
+    "bin/*.js",
+    "scripts/*.py",
+    "src/code-security/*.py",
+    "src/code-security/data/*.csv",
+    "src/code-security/scripts/*.py",
+    "src/code-security/templates/*.json",
+    "src/code-security/templates/*.md"
   ],
   "engines": {
     "node": ">=14"
+  },
+  "bugs": {
+    "url": "https://github.com/Chiehyii/code-security-skill/issues"
   }
 }
