@@ -196,11 +196,48 @@ class SearchTests(unittest.TestCase):
         ids = {row["id"] for row in results}
         self.assertIn("V049", ids)
 
+    def test_common_chinese_template_query_prefers_ssti(self):
+        rows = security_search.load_csv("vulnerabilities.csv")
+        results = security_search.search_rows("模板注入", rows, top_n=3)
+        self.assertEqual("V049", results[0]["id"])
+
     def test_chinese_nosql_query_finds_nosql_injection(self):
         rows = security_search.load_csv("vulnerabilities.csv")
         results = security_search.search_rows("非關聯式資料庫 mongodb", rows, top_n=3)
         ids = {row["id"] for row in results}
         self.assertIn("V050", ids)
+
+    def test_nosql_query_finds_rule_and_checklist(self):
+        rules = security_search.search_rows(
+            "nosql", security_search.load_csv("rules.csv"), top_n=5
+        )
+        checklists = security_search.search_checklists(
+            "nosql", security_search.load_csv("checklists.csv"), top_n=5
+        )
+        self.assertIn("R051", {row["id"] for row in rules})
+        self.assertIn("F026", {row["id"] for row in checklists})
+
+    def test_cwe_search_maps_ssti_and_nosql_root_causes(self):
+        cwe = security_search.load_cwe_rows()
+        self.assertEqual(
+            "CWE-1336",
+            security_search.search_rows("ssti template injection", cwe, top_n=1)[0]["id"],
+        )
+        self.assertEqual(
+            "CWE-943",
+            security_search.search_rows("nosql mongodb operator injection", cwe, top_n=1)[0]["id"],
+        )
+
+    def test_ssti_and_nosql_guidance_avoids_misleading_blocklists(self):
+        vulnerabilities = {
+            row["id"]: row for row in security_search.load_csv("vulnerabilities.csv")
+        }
+        rules = {row["id"]: row for row in security_search.load_csv("rules.csv")}
+        self.assertNotIn("reject template syntax", vulnerabilities["V049"]["fix_pattern"].lower())
+        self.assertNotIn("$where", vulnerabilities["V050"]["fix_pattern"])
+        self.assertIn("template source", rules["R050"]["bad_example"])
+        self.assertEqual("CWE-1336", rules["R050"]["reference"])
+        self.assertEqual("CWE-943", rules["R051"]["reference"])
 
 
 if __name__ == "__main__":

@@ -93,6 +93,12 @@ def main():
         raise ValueError("MITRE CWE Top 25 2025 ranks must be unique from 1 through 25")
     print("OK MITRE CWE Top 25 2025: complete ranked coverage")
 
+    extended_cwe = loaded["cwe_extended.csv"]
+    required_extended_cwe = {"CWE-1336", "CWE-943"}
+    if not required_extended_cwe <= {row["id"] for row in extended_cwe}:
+        raise ValueError("Extended CWE index must include SSTI and NoSQL Injection")
+    print(f"OK extended CWE index: {len(extended_cwe)} additional root causes")
+
     assurance = loaded["assurance.csv"]
     if len(assurance) < 15:
         raise ValueError("Security assurance control set must contain at least 15 controls")

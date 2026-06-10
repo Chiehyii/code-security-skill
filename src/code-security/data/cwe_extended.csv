@@ -1,0 +1,3 @@
+id,name,category,applies_to,prevention,trigger_keywords,source_version
+CWE-1336,Improper Neutralization of Special Elements Used in a Template Engine,Injection,all,"Never compile or render untrusted data as template source; use static templates and pass untrusted data only as values",ssti template injection jinja2 twig freemarker ejs pug nunjucks,MITRE CWE 4.20
+CWE-943,Improper Neutralization of Special Elements in Data Query Logic,Injection,all,"Define typed allowlist schemas and construct data-store queries server-side; never accept client-controlled query logic",nosql nosqli mongodb elasticsearch redis cassandra operator query filter,MITRE CWE 4.20

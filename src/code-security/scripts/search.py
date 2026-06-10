@@ -42,6 +42,10 @@ EXPECTED_FIELDS = {
         "id", "rank", "name", "category", "applies_to", "prevention",
         "trigger_keywords", "source_version",
     ],
+    "cwe_extended.csv": [
+        "id", "name", "category", "applies_to", "prevention",
+        "trigger_keywords", "source_version",
+    ],
     "assurance.csv": [
         "id", "phase", "control", "verification", "evidence", "automation",
         "trigger_keywords", "reference", "review_date",
@@ -84,8 +88,11 @@ QUERY_ALIASES = {
     "漏洞": "vulnerability security",
     "安全": "security",
     "樣板注入": "template ssti render injection jinja2",
+    "模板注入": "template ssti render injection jinja2",
     "非關聯式資料庫": "nosql mongodb document collection injection",
+    "文件資料庫": "nosql document database mongodb",
     "樣板": "template render",
+    "模板": "template render",
 }
 
 SEVERITY_LABELS = {
@@ -272,12 +279,17 @@ def fmt_asvs(row):
 
 
 def fmt_cwe(row):
+    rank = f"#{row['rank']} " if row.get("rank") else ""
     return "\n".join([
-        f"  [CWE TOP 25] #{row['rank']} {row['id']} - {row['name']}",
+        f"  [CWE] {rank}{row['id']} - {row['name']}",
         f"     Category  : {row['category']} | Applies to: {row['applies_to']}",
         f"     Prevention: {row['prevention']}",
         f"     Source    : {row['source_version']}",
     ])
+
+
+def load_cwe_rows():
+    return load_csv("cwe_top25.csv") + load_csv("cwe_extended.csv")
 
 
 def fmt_assurance(row):
@@ -312,7 +324,7 @@ def generate_security_report(query, language=None):
     rules = search_rows(query, rules, top_n=4)
     crypto = search_rows(query, load_csv("crypto.csv"), top_n=3)
     asvs = search_rows(query, load_csv("asvs.csv"), top_n=3)
-    cwe = search_rows(query, load_csv("cwe_top25.csv"), top_n=3)
+    cwe = search_rows(query, load_cwe_rows(), top_n=3)
     assurance = search_rows(query, load_csv("assurance.csv"), top_n=3)
 
     print("=" * 88)
@@ -325,7 +337,7 @@ def generate_security_report(query, language=None):
     print_section("SECURE CODING RULES", rules, fmt_rule)
     print_section("CRYPTOGRAPHY RECOMMENDATIONS", crypto, fmt_crypto)
     print_section("ASVS VERIFICATION AREAS", asvs, fmt_asvs)
-    print_section("CWE TOP 25 ROOT CAUSES", cwe, fmt_cwe)
+    print_section("CWE ROOT CAUSES", cwe, fmt_cwe)
     print_section("SECURITY ASSURANCE CONTROLS", assurance, fmt_assurance)
 
     if not any((checklists, vulnerabilities, rules, crypto, asvs, cwe, assurance)):
@@ -377,12 +389,14 @@ def main():
         "crypto": ("crypto.csv", fmt_crypto),
         "rules": ("rules.csv", fmt_rule),
         "asvs": ("asvs.csv", fmt_asvs),
-        "cwe": ("cwe_top25.csv", fmt_cwe),
         "control": ("assurance.csv", fmt_assurance),
     }
     if args.mode == "checklist":
         rows = search_checklists(args.query, load_csv("checklists.csv"), args.top)
         formatter = fmt_checklist
+    elif args.mode == "cwe":
+        rows = search_rows(args.query, load_cwe_rows(), args.top)
+        formatter = fmt_cwe
     else:
         filename, formatter = config[args.mode]
         rows = load_csv(filename)

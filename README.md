@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 [![OWASP Top 10](https://img.shields.io/badge/OWASP_Top_10-2025-red?style=for-the-badge)](https://owasp.org/Top10/2025/en/)
-[![48 Vulnerability Profiles](https://img.shields.io/badge/vulnerability_profiles-48-orange?style=for-the-badge)]()
+[![50 Vulnerability Profiles](https://img.shields.io/badge/vulnerability_profiles-50-orange?style=for-the-badge)]()
 [![Python 3.x](https://img.shields.io/badge/python-3.x-yellow?style=for-the-badge&logo=python&logoColor=white)]()
 
 > An AI Skill that automatically applies military-grade security standards when engineers write code.  
@@ -57,12 +57,13 @@ user = db.execute(f"SELECT * FROM users WHERE id={user_id}")
 
 ## Features
 
-- **48 vulnerability profiles** — includes complete category coverage for OWASP API Security Top 10 2023 and OWASP LLM Top 10 2025
-- **25 Feature-specific security checklists** — Auth, API, LLM, CI/CD, privacy, WebSocket, serverless, mobile, native memory safety, incident response, and more
-- **48 Language, framework & engineering rules** — Python, JS/TS, PHP, Java, Go, Ruby, C#, C/C++, Rust, Terraform, and shared practices
+- **50 vulnerability profiles** — includes complete category coverage for OWASP API Security Top 10 2023 and OWASP LLM Top 10 2025
+- **26 Feature-specific security checklists** — Auth, API, NoSQL, LLM, CI/CD, privacy, WebSocket, serverless, mobile, native memory safety, incident response, and more
+- **51 Language, framework & engineering rules** — Python, JS/TS, PHP, Java, Go, Ruby, C#, C/C++, Rust, Terraform, and shared practices
 - **12 Cryptography guides** — bcrypt, argon2, AES-256-GCM, HMAC, JWT, mTLS, **secrets management, KMS, secure token storage**
 - **OWASP ASVS 5.0.0 index** — searchable coverage of all 17 chapters and the official 345-requirement total
 - **MITRE CWE Top 25 2025 index** — complete ranked root-cause coverage, including native memory-safety weaknesses
+- **Extended CWE mappings** — precise searchable mappings for SSTI (`CWE-1336`) and NoSQL Injection (`CWE-943`)
 - **15 governed assurance controls** — threat modeling, SAST, DAST, secrets, SBOM, provenance, fuzzing, IaC, incident response, and privacy lifecycle
 - **Validated BM25 + keyword hybrid search engine** — supports common Traditional Chinese queries, explicit no-result responses, and legacy Windows terminals
 - **Auto-activation** — triggers on 50+ keywords including modern ones (llm, prompt, agent, supply chain, kubernetes, graphql, oauth, …)
@@ -250,12 +251,13 @@ code-security-skill/
 ├── src/
 │   └── code-security/
 │       ├── data/
-│       │   ├── vulnerabilities.csv    ← 48 vulnerability profiles
-│       │   ├── rules.csv              ← 48 secure engineering rules
-│       │   ├── checklists.csv         ← 25 feature checklists
+│       │   ├── vulnerabilities.csv    ← 50 vulnerability profiles
+│       │   ├── rules.csv              ← 51 secure engineering rules
+│       │   ├── checklists.csv         ← 26 feature checklists
 │       │   ├── crypto.csv             ← 12 cryptography guides
 │       │   ├── asvs.csv               ← ASVS 5.0.0 chapter index
 │       │   ├── cwe_top25.csv          ← MITRE CWE Top 25 2025
+│       │   ├── cwe_extended.csv       ← precise additional CWE mappings
 │       │   └── assurance.csv          ← governed assurance controls
 │       ├── scripts/
 │       │   ├── search.py              ← BM25 search engine
