@@ -16,7 +16,7 @@ Supported platforms
   cursor    Cursor       → .cursor/mcp.json  +  .cursor/rules/code-security.mdc
   windsurf  Windsurf     → .windsurf/mcp_config.json  +  .windsurf/rules/code-security.md
   copilot   GitHub Copilot → .github/copilot-instructions.md  (no MCP yet)
-  codex     OpenAI Codex → AGENTS.md  (no MCP yet)
+  codex     OpenAI Codex → .codex/config.toml  +  AGENTS.md
   all       All of the above (default)
 
 Usage
@@ -50,7 +50,7 @@ PLATFORM_LABELS = {
     "cursor":   "Cursor         → .cursor/mcp.json  +  .cursor/rules/code-security.mdc",
     "copilot":  "GitHub Copilot → .github/copilot-instructions.md",
     "windsurf": "Windsurf       → .windsurf/mcp_config.json  +  .windsurf/rules/code-security.md",
-    "codex":    "OpenAI Codex   → AGENTS.md",
+    "codex":    "OpenAI Codex   → .codex/config.toml  +  AGENTS.md",
 }
 
 _BLOCK_START = "<!-- code-security-skill-start -->"
@@ -99,6 +99,34 @@ def _overwrite_file(file_path: Path, content: str, force: bool) -> str:
     file_path.write_text(content, encoding="utf-8")
     verb = "updated" if file_path.exists() else "created"
     return f"  ok  {verb:<14} {file_path}"
+
+
+def _write_mcp_toml(config_path: Path, server_py: Path, force: bool) -> str:
+    """Write / merge a [mcp_servers.code-security] section into a TOML config file."""
+    section_header = "[mcp_servers.code-security]"
+    new_section = (
+        f"\n{section_header}\n"
+        f'command = "{sys.executable}"\n'
+        f'args    = ["{server_py.as_posix()}"]\n'
+    )
+    if config_path.exists():
+        existing = config_path.read_text(encoding="utf-8")
+        if section_header in existing:
+            if not force:
+                return f"  --  already present    {config_path}"
+            import re as _re
+            existing = _re.sub(
+                rf"\n?\[mcp_servers\.code-security\][^\[]*",
+                "",
+                existing,
+                flags=_re.DOTALL,
+            )
+        config_path.write_text(existing + new_section, encoding="utf-8")
+        return f"  ok  mcp config          {config_path}"
+    else:
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(new_section.lstrip(), encoding="utf-8")
+        return f"  ok  mcp config          {config_path}"
 
 
 def _write_mcp_json(config_path: Path, server_py: Path, force: bool) -> str:
@@ -249,8 +277,17 @@ def install_copilot(target: Path, force: bool) -> list:
 
 
 def install_codex(target: Path, force: bool) -> list:
-    # OpenAI Codex CLI does not yet support MCP — static rules only
-    return [_inject_or_replace(target / "AGENTS.md", _skill_content(), force)]
+    results = []
+    # MCP config — .codex/config.toml (project) or ~/.codex/config.toml (global)
+    results += _ensure_global_server(force)
+    results.append(_write_mcp_toml(
+        target / ".codex" / "config.toml",
+        GLOBAL_DIR / "mcp_server.py",
+        force,
+    ))
+    # Static rules — AGENTS.md
+    results.append(_inject_or_replace(target / "AGENTS.md", _skill_content(), force))
+    return results
 
 
 INSTALLERS = {
