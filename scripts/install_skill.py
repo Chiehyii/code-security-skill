@@ -314,48 +314,173 @@ INSTALLERS = {
 
 
 # ---------------------------------------------------------------------------
+# Uninstall helpers
+# ---------------------------------------------------------------------------
+
+def _remove_block(file_path: Path) -> str:
+    """Remove the injected skill block from a markdown file."""
+    if not file_path.exists():
+        return f"  --  not found          {file_path}"
+    content = file_path.read_text(encoding="utf-8")
+    if _BLOCK_START not in content:
+        return f"  --  not present        {file_path}"
+    new_content = re.sub(
+        rf"\n?{re.escape(_BLOCK_START)}.*?{re.escape(_BLOCK_END)}\n?",
+        "",
+        content,
+        flags=re.DOTALL,
+    )
+    if new_content.strip():
+        file_path.write_text(new_content, encoding="utf-8")
+        return f"  ok  removed block      {file_path}"
+    else:
+        file_path.unlink()
+        return f"  ok  deleted (empty)    {file_path}"
+
+
+def _remove_file(file_path: Path) -> str:
+    if not file_path.exists():
+        return f"  --  not found          {file_path}"
+    file_path.unlink()
+    return f"  ok  deleted            {file_path}"
+
+
+def _remove_mcp_json_entry(config_path: Path) -> str:
+    if not config_path.exists():
+        return f"  --  not found          {config_path}"
+    try:
+        cfg = json.loads(config_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return f"  !!  invalid JSON       {config_path}"
+    servers = cfg.get("mcpServers", {})
+    if "code-security" not in servers:
+        return f"  --  not present        {config_path}"
+    del servers["code-security"]
+    if not servers:
+        del cfg["mcpServers"]
+    if not cfg:
+        config_path.unlink()
+        return f"  ok  deleted (empty)    {config_path}"
+    config_path.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
+    return f"  ok  removed entry      {config_path}"
+
+
+def _remove_mcp_toml_entry(config_path: Path) -> str:
+    if not config_path.exists():
+        return f"  --  not found          {config_path}"
+    content = config_path.read_text(encoding="utf-8")
+    if "[mcp_servers.code-security]" not in content:
+        return f"  --  not present        {config_path}"
+    # Walk line-by-line: drop the target section and all its key-value lines
+    result, in_section = [], False
+    for line in content.splitlines(keepends=True):
+        stripped = line.strip()
+        if stripped == "[mcp_servers.code-security]":
+            in_section = True
+            continue
+        if in_section and stripped.startswith("["):
+            in_section = False  # new section header ends this block
+        if not in_section:
+            result.append(line)
+    new_content = "".join(result)
+    if new_content.strip():
+        config_path.write_text(new_content, encoding="utf-8")
+    else:
+        config_path.unlink()
+    return f"  ok  removed entry      {config_path}"
+
+
+# ---------------------------------------------------------------------------
+# Platform uninstallers
+# ---------------------------------------------------------------------------
+
+def uninstall_claude(target: Path) -> list:
+    results = []
+    dest = target / ".claude" / "skills" / "code-security"
+    if dest.exists():
+        shutil.rmtree(dest)
+        results.append(f"  ok  deleted            {dest}")
+    else:
+        results.append(f"  --  not found          {dest}")
+    results.append(_remove_mcp_json_entry(target / ".mcp.json"))
+    results.append(_remove_block(target / "CLAUDE.md"))
+    return results
+
+
+def uninstall_cursor(target: Path) -> list:
+    return [
+        _remove_file(target / ".cursor" / "rules" / "code-security.mdc"),
+        _remove_mcp_json_entry(target / ".cursor" / "mcp.json"),
+    ]
+
+
+def uninstall_copilot(target: Path) -> list:
+    return [_remove_block(target / ".github" / "copilot-instructions.md")]
+
+
+def uninstall_windsurf(target: Path) -> list:
+    return [
+        _remove_file(target / ".windsurf" / "rules" / "code-security.md"),
+        _remove_mcp_json_entry(target / ".windsurf" / "mcp_config.json"),
+    ]
+
+
+def uninstall_codex(target: Path) -> list:
+    return [
+        _remove_mcp_toml_entry(target / ".codex" / "config.toml"),
+        _remove_block(target / "AGENTS.md"),
+    ]
+
+
+def uninstall_antigravity(target: Path) -> list:
+    global_cfg = Path.home() / ".gemini" / "config" / "mcp_config.json"
+    return [
+        _remove_mcp_json_entry(global_cfg),
+        "  --  note: global config updated",
+    ]
+
+
+UNINSTALLERS = {
+    "claude":      uninstall_claude,
+    "cursor":      uninstall_cursor,
+    "copilot":     uninstall_copilot,
+    "windsurf":    uninstall_windsurf,
+    "codex":       uninstall_codex,
+    "antigravity": uninstall_antigravity,
+}
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
-def main():
-    _configure_output()
-    parser = argparse.ArgumentParser(
-        description="Install the Code Security Skill (static rules + MCP server)",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=textwrap.dedent("""\
-            examples:
-              python3 scripts/install_skill.py                         # all platforms, cwd
-              python3 scripts/install_skill.py /path/to/project        # all platforms, target dir
-              python3 scripts/install_skill.py . --ai claude           # Claude Code only
-              python3 scripts/install_skill.py . --ai cursor windsurf  # Cursor + Windsurf
-              python3 scripts/install_skill.py . --force               # overwrite existing
-        """),
-    )
-    parser.add_argument("target_project", nargs="?", default=".",
-                        help="Target project directory (default: current directory)")
-    parser.add_argument("--ai", nargs="+", default=["all"], metavar="PLATFORM",
-                        help=f"Platforms: {', '.join(ALL_PLATFORMS)}, all (default: all)")
-    parser.add_argument("--force", action="store_true",
-                        help="Overwrite or update existing files")
-    args = parser.parse_args()
-
-    requested = [p.lower() for p in args.ai]
+def _parse_platforms(ai_list: list) -> list:
+    requested = [p.lower() for p in ai_list]
     invalid   = [p for p in requested if p not in ALL_PLATFORMS + ["all"]]
     if invalid:
-        parser.error(f"Unknown platform(s): {', '.join(invalid)}\n"
-                     f"Valid: {', '.join(ALL_PLATFORMS + ['all'])}")
-    platforms = ALL_PLATFORMS if "all" in requested else list(dict.fromkeys(requested))
+        print(f"Error: Unknown platform(s): {', '.join(invalid)}\n"
+              f"Valid: {', '.join(ALL_PLATFORMS + ['all'])}", file=sys.stderr)
+        sys.exit(1)
+    return ALL_PLATFORMS if "all" in requested else list(dict.fromkeys(requested))
 
-    target = Path(args.target_project).resolve()
+
+def _resolve_target(path_str: str) -> Path:
+    target = Path(path_str).resolve()
     if not target.is_dir():
         print(f"Error: '{target}' is not a directory.", file=sys.stderr)
         sys.exit(1)
     if target == ROOT:
-        print("Error: Cannot install into this source repository.", file=sys.stderr)
+        print("Error: Cannot operate on this source repository.", file=sys.stderr)
         sys.exit(1)
+    return target
+
+
+def cmd_install(args):
+    platforms = _parse_platforms(args.ai)
+    target    = _resolve_target(args.target_project)
 
     print()
-    print("  Code Security Skill - Installer")
+    print("  Code Security Skill - Install")
     print(f"  Target   : {target}")
     print(f"  Platforms: {', '.join(platforms)}")
     print()
@@ -368,20 +493,75 @@ def main():
 
     print("  Done. The skill auto-activates when writing security-sensitive code.")
     print()
-
-    mcp_platforms = [p for p in platforms if p in ("claude", "cursor", "windsurf")]
+    mcp_platforms = [p for p in platforms if p in ("claude", "cursor", "windsurf", "codex", "antigravity")]
     if mcp_platforms:
         print("  MCP server ready:")
         print(f"    {GLOBAL_DIR / 'mcp_server.py'}")
         print()
-        print("  Prerequisite (if not installed):")
-        print("    pip install mcp")
+        print("  Prerequisite (if not installed):  pip install mcp")
         print()
 
-    if "claude" in platforms:
-        print("  Verify search engine:")
-        print("    python3 .claude/skills/code-security/scripts/search.py 'login' --lang python")
+
+def cmd_uninstall(args):
+    platforms   = _parse_platforms(args.ai)
+    target      = _resolve_target(args.target_project)
+    remove_global = args.global_server
+
+    print()
+    print("  Code Security Skill - Uninstall")
+    print(f"  Target   : {target}")
+    print(f"  Platforms: {', '.join(platforms)}")
+    print()
+
+    for platform in platforms:
+        print(f"  [{platform.upper()}] {PLATFORM_LABELS[platform]}")
+        for line in UNINSTALLERS[platform](target):
+            print(line)
         print()
+
+    if remove_global:
+        if GLOBAL_DIR.exists():
+            shutil.rmtree(GLOBAL_DIR)
+            print(f"  ok  deleted global server  {GLOBAL_DIR}")
+        else:
+            print(f"  --  not found              {GLOBAL_DIR}")
+        print()
+
+    print("  Done.")
+    print()
+
+
+def main():
+    _configure_output()
+
+    parser = argparse.ArgumentParser(
+        description="Code Security Skill — install or uninstall",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    sub = parser.add_subparsers(dest="command")
+
+    # ── install ──────────────────────────────────────────────────────────────
+    p_install = sub.add_parser("install", help="Install the skill into a project")
+    p_install.add_argument("target_project", nargs="?", default=".")
+    p_install.add_argument("--ai", nargs="+", default=["all"], metavar="PLATFORM")
+    p_install.add_argument("--force", action="store_true")
+
+    # ── uninstall ─────────────────────────────────────────────────────────────
+    p_uninst = sub.add_parser("uninstall", help="Remove the skill from a project")
+    p_uninst.add_argument("target_project", nargs="?", default=".")
+    p_uninst.add_argument("--ai", nargs="+", default=["all"], metavar="PLATFORM")
+    p_uninst.add_argument("--global-server", action="store_true",
+                          help=f"Also delete the global MCP server at {GLOBAL_DIR}")
+
+    args = parser.parse_args()
+
+    if args.command == "install":
+        cmd_install(args)
+    elif args.command == "uninstall":
+        cmd_uninstall(args)
+    else:
+        parser.print_help()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
