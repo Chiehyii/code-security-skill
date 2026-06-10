@@ -1,0 +1,26 @@
+{
+  "name": "codesecurity",
+  "version": "3.0.0",
+  "description": "Auto-apply OWASP Top 10 2025 security standards in Claude Code, Cursor, GitHub Copilot, Windsurf, and OpenAI Codex — with MCP server for live queries",
+  "keywords": [
+    "security", "owasp", "mcp", "claude-code", "cursor",
+    "copilot", "windsurf", "codex", "skill", "appsec", "devsecops"
+  ],
+  "homepage": "https://github.com/YOUR_ORG/code-security-skill",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_ORG/code-security-skill.git"
+  },
+  "license": "MIT",
+  "bin": {
+    "codesecurity": "./bin/codesecurity.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "scripts/"
+  ],
+  "engines": {
+    "node": ">=14"
+  }
+}

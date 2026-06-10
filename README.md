@@ -80,24 +80,65 @@ user = db.execute(f"SELECT * FROM users WHERE id={user_id}")
 
 ## Installation
 
-### For Claude Code
+Run **one command** from your project root. The skill installs itself into every
+supported AI coding tool automatically.
+
+### One-liner (Unix / macOS)
 
 ```bash
-# Clone the source repository
-git clone https://github.com/your-org/code-security-skill.git /tmp/code-security-skill
-
-# Install into another project
-python3 /tmp/code-security-skill/scripts/install_skill.py /path/to/your-project
+curl -sSL https://raw.githubusercontent.com/YOUR_ORG/code-security-skill/main/install.sh | bash
 ```
 
-Use `--force` to replace a previously installed copy:
+### One-liner (Windows PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/YOUR_ORG/code-security-skill/main/install.ps1 | iex
+```
+
+### Manual (cross-platform, Python 3)
 
 ```bash
-python3 scripts/install_skill.py /path/to/your-project --force
+git clone --depth 1 https://github.com/YOUR_ORG/code-security-skill /tmp/csk
+python3 /tmp/csk/scripts/install_skill.py .
 ```
 
-`src/code-security` is the only source of truth in this repository. Generated
-`.claude/skills/code-security` installations are intentionally not committed.
+All three commands install for **all supported AI tools at once**.
+
+---
+
+### Supported AI tools
+
+| Tool | Files created | Auto-activates? |
+|------|--------------|-----------------|
+| **Claude Code** | `.claude/skills/code-security/` + `CLAUDE.md` | Yes — CLAUDE.md is always loaded |
+| **Cursor** | `.cursor/rules/code-security.mdc` | Yes — `alwaysApply: true` |
+| **GitHub Copilot** | `.github/copilot-instructions.md` | Yes — auto-loaded by Copilot Chat |
+| **Windsurf** | `.windsurf/rules/code-security.md` | Yes — `trigger: always_on` |
+| **OpenAI Codex** | `AGENTS.md` | Yes — auto-loaded by Codex CLI |
+
+For other tools (Kiro, Continue, Aider, etc.) copy the content of
+`.github/copilot-instructions.md` into the tool's system-prompt or rules file.
+
+---
+
+### Install for specific tools only
+
+```bash
+python3 /tmp/csk/scripts/install_skill.py . --ai claude
+python3 /tmp/csk/scripts/install_skill.py . --ai cursor
+python3 /tmp/csk/scripts/install_skill.py . --ai copilot
+python3 /tmp/csk/scripts/install_skill.py . --ai windsurf
+python3 /tmp/csk/scripts/install_skill.py . --ai codex
+
+# Multiple at once
+python3 /tmp/csk/scripts/install_skill.py . --ai claude cursor copilot
+```
+
+### Re-install / upgrade
+
+```bash
+python3 /tmp/csk/scripts/install_skill.py . --force
+```
 
 ### Prerequisites
 
@@ -107,6 +148,9 @@ python3 --version  # Python 3.x required
 # Optional (for MIME type validation examples)
 pip install python-magic
 ```
+
+`src/code-security` is the only source of truth in this repository. Generated
+files (`.claude/skills/`, `.cursor/rules/`, etc.) are intentionally not committed.
 
 ---
 
